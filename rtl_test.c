@@ -27,7 +27,7 @@
 #define RTL_TEST_EQUAL(a, b)                                                                       \
   if (!(a == b)) {                                                                                 \
     fprintf(stderr, "%s != %s\n", #a, #b);                                                         \
-    return -__LINE__;                                                                              \
+    return __LINE__;                                                                               \
   }
 
 int main(int argc, char** argv)
