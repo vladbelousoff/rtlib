@@ -22,8 +22,8 @@
 
 #include "rtl_memory.h"
 
-#define RTL_TEST_EQUAL(a, b)                                                                                           \
-  if (!(a == b))                                                                                                       \
+#define RTL_TEST_EQUAL(a, b)                                                                       \
+  if (!(a == b))                                                                                   \
     return -(__LINE__);
 
 int main(int argc, char** argv)
@@ -33,7 +33,8 @@ int main(int argc, char** argv)
 
   char* data = RTL_NEW(42);
 #ifdef RTL_DEBUG_BUILD
-  const struct rtl_memory_header* header = (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
+  const struct rtl_memory_header* header =
+    (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
   RTL_TEST_EQUAL(header->size, 42);
   RTL_TEST_EQUAL(header->line, 34);
 #endif
