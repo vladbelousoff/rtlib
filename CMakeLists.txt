@@ -39,6 +39,9 @@ add_library(rtlib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(rtlib PUBLIC include)
 
 # Add special define for the debug configuration
-target_compile_definitions(rtlib PRIVATE
+target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_BUILD>
 )
+
+add_executable(rtl_test rtl_test.c)
+target_link_libraries(rtl_test rtlib)
