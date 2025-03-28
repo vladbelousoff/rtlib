@@ -22,9 +22,13 @@
 
 #include "rtl_memory.h"
 
+#include <stdio.h>
+
 #define RTL_TEST_EQUAL(a, b)                                                                       \
-  if (!(a == b))                                                                                   \
-    return -(__LINE__);
+  if (!(a == b)) {                                                                                 \
+    fprintf(stderr, "%s != %s\n", #a, #b);                                                         \
+    return -__LINE__;                                                                              \
+  }
 
 int main(int argc, char** argv)
 {
@@ -36,7 +40,7 @@ int main(int argc, char** argv)
   const struct rtl_memory_header* header =
     (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
   RTL_TEST_EQUAL(header->size, 42);
-  RTL_TEST_EQUAL(header->line, 34);
+  RTL_TEST_EQUAL(header->line, 38);
 #endif
   rtl_free(data);
 
