@@ -32,7 +32,7 @@ static struct rtl_list_entry rtl_memory_allocations;
 
 void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
-  const char* filename, unsigned long line,
+  const char* file, unsigned long line,
 #endif
   unsigned long size)
 {
@@ -42,7 +42,7 @@ void* __rtl_malloc(
   // ReSharper disable once CppDFAMemoryLeak
   char* data = malloc(sizeof(struct rtl_memory_header) + size);
   struct rtl_memory_header* header = (struct rtl_memory_header*)data;
-  header->filename = filename;
+  header->file = file;
   header->line = line;
   header->size = size;
   rtl_list_push_back(&rtl_memory_allocations, &header->link);
@@ -84,7 +84,7 @@ void rtl_memory_cleanup()
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
     const struct rtl_memory_header* header = rtl_list_record(entry, struct rtl_memory_header, link);
-    fprintf(stderr, "Leaked memory, file: %s, line: %lu, size: %lu", header->filename, header->line,
+    fprintf(stderr, "Leaked memory, file: %s, line: %lu, size: %lu", header->file, header->line,
       header->size);
     rtl_list_remove(&header->link);
     free((void*)header);

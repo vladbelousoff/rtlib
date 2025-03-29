@@ -36,7 +36,7 @@
 struct rtl_memory_header
 {
   struct rtl_list_entry link;
-  const char* filename;
+  const char* file;
   unsigned long line;
   unsigned long size;
 };
@@ -44,7 +44,7 @@ struct rtl_memory_header
 
 void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
-  const char* filename, unsigned long line,
+  const char* file, unsigned long line,
 #endif
   unsigned long size);
 
