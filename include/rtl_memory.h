@@ -23,9 +23,9 @@
 #pragma once
 
 #ifdef RTL_DEBUG_BUILD
-#define RTL_NEW(size) rtl_malloc(__FILE__, __LINE__, size)
+#define rtl_new(size) rtl_malloc(__FILE__, __LINE__, size)
 #else
-#define RTL_NEW(size) rtl_malloc(size)
+#define rtl_new(size) rtl_malloc(size)
 #endif
 
 #ifdef RTL_DEBUG_BUILD

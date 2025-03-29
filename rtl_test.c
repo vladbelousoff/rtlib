@@ -35,7 +35,7 @@ int main(int argc, char** argv)
   (void)argc;
   (void)argv;
 
-  char* data = RTL_NEW(42);
+  char* data = rtl_new(42);
 #ifdef RTL_DEBUG_BUILD
   const struct rtl_memory_header* header =
     (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
