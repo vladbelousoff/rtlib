@@ -23,6 +23,10 @@
 #pragma once
 
 #ifdef RTL_DEBUG_BUILD
+#include "rtl_list.h"
+#endif
+
+#ifdef RTL_DEBUG_BUILD
 #define rtl_new(size) rtl_malloc(__FILE__, __LINE__, size)
 #else
 #define rtl_new(size) rtl_malloc(size)
@@ -31,6 +35,7 @@
 #ifdef RTL_DEBUG_BUILD
 struct rtl_memory_header
 {
+  struct rtl_list_entry link;
   const char* filename;
   unsigned long line;
   unsigned long size;
@@ -44,3 +49,6 @@ void* rtl_malloc(
   unsigned long size);
 
 void rtl_free(void* data);
+
+void rtl_memory_init();
+void rtl_memory_cleanup();
