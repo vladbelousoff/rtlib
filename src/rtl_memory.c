@@ -30,7 +30,7 @@
 static struct rtl_list_entry rtl_memory_allocations;
 #endif
 
-void* rtl_malloc(
+void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
   const char* filename, unsigned long line,
 #endif

@@ -27,9 +27,9 @@
 #endif
 
 #ifdef RTL_DEBUG_BUILD
-#define rtl_new(size) rtl_malloc(__FILE__, __LINE__, size)
+#define rtl_malloc(size) __rtl_malloc(__FILE__, __LINE__, size)
 #else
-#define rtl_new(size) rtl_malloc(size)
+#define rtl_malloc(size) __rtl_malloc(size)
 #endif
 
 #ifdef RTL_DEBUG_BUILD
@@ -42,7 +42,7 @@ struct rtl_memory_header
 };
 #endif
 
-void* rtl_malloc(
+void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
   const char* filename, unsigned long line,
 #endif

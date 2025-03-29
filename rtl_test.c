@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   // Init the library
   rtl_init();
 
-  char* data = rtl_new(10);
+  char* data = rtl_malloc(10);
 #ifdef RTL_DEBUG_BUILD
   const struct rtl_memory_header* header =
     (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
