@@ -44,7 +44,7 @@ int main(int argc, char** argv)
   const struct rtl_memory_header* header =
     (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
   RTL_TEST_EQUAL(header->size, 10);
-  RTL_TEST_EQUAL(header->line, 42);
+  RTL_TEST_EQUAL(header->source_location.line, 42);
 #endif
   rtl_free(data);
 

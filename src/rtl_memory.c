@@ -27,18 +27,16 @@
 #include <string.h>
 
 #ifdef RTL_DEBUG_BUILD
-
 /**
  * @internal
  * @brief Head of the linked list used to track memory allocations in debug builds.
  */
 static struct rtl_list_entry rtl_memory_allocations;
-
 #endif
 
 void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
-  const char* file, unsigned long line,
+  struct rtl_source_location source_location,
 #endif
   unsigned long size)
 {
@@ -48,8 +46,7 @@ void* __rtl_malloc(
   // ReSharper disable once CppDFAMemoryLeak
   char* data = malloc(sizeof(struct rtl_memory_header) + size);
   struct rtl_memory_header* header = (struct rtl_memory_header*)data;
-  header->file = file;
-  header->line = line;
+  header->source_location = source_location;
   header->size = size;
   rtl_list_push_back(&rtl_memory_allocations, &header->link);
   // Mark the memory with 0x77 to be able to debug uninitialized memory
@@ -90,8 +87,8 @@ void rtl_memory_cleanup()
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
     struct rtl_memory_header* header = rtl_list_record(entry, struct rtl_memory_header, link);
-    fprintf(stderr, "Leaked memory, file: %s, line: %lu, size: %lu", header->file, header->line,
-      header->size);
+    fprintf(stderr, "Leaked memory, file: %s, line: %lu, size: %lu", header->source_location.file,
+      header->source_location.line, header->size);
     rtl_list_remove(&header->link);
     free(header);
   }

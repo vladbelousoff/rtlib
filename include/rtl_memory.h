@@ -26,37 +26,50 @@
 #include "rtl_list.h"
 #endif
 
-#ifdef RTL_DEBUG_BUILD
 /**
- * @brief Allocates memory using the rtl memory manager.
- * @param size The number of bytes to allocate.
- * @return A pointer to the allocated memory, or NULL on failure.
- * @note In debug builds (RTL_DEBUG_BUILD defined), this macro automatically
- *       passes the file name and line number to track allocations.
+ * @brief Structure to store source code location information.
  */
-#define rtl_malloc(size) __rtl_malloc(__FILE__, __LINE__, size)
+struct rtl_source_location
+{
+  const char* file;   /**< Source file name */
+  unsigned long line; /**< Source line number */
+};
+
+/**
+ * @brief Creates a source location structure with current file and line.
+ * @return A rtl_source_location structure initialized with current location.
+ */
+#define RTL_SOURCE_LOCATION ((struct rtl_source_location){ __FILE__, __LINE__ })
+
+#ifdef RTL_DEBUG_BUILD
+#define rtl_malloc(size) __rtl_malloc(RTL_SOURCE_LOCATION, size)
 #else
 #define rtl_malloc(size) __rtl_malloc(size)
 #endif
 
 #ifdef RTL_DEBUG_BUILD
-
 /**
  * @brief Header structure prepended to memory allocations in debug builds.
  *        Contains metadata for tracking memory leaks.
  */
 struct rtl_memory_header
 {
-  struct rtl_list_entry link; /**< List entry for tracking allocations. */
-  const char* file;           /**< File where the allocation occurred. */
-  unsigned long line;         /**< Line number where the allocation occurred. */
-  unsigned long size;         /**< Size of the allocated block (excluding header). */
+  struct rtl_list_entry link;
+  struct rtl_source_location source_location;
+  unsigned long size;
 };
 #endif
 
+/**
+ * @brief Internal memory allocation function.
+ * @param source_location Source location information (only in debug builds).
+ * @param size The number of bytes to allocate.
+ * @return A pointer to the allocated memory, or NULL on failure.
+ * @note Users should typically use the rtl_malloc() macro instead.
+ */
 void* __rtl_malloc(
 #ifdef RTL_DEBUG_BUILD
-  const char* file, unsigned long line,
+  struct rtl_source_location source_location,
 #endif
   unsigned long size);
 
