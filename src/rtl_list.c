@@ -20,26 +20,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#include "rtl_list.h"
 
-#define rtl_list_record(address, type, field)                                                      \
-  ((type*)((char*)(address) - (char*)(&((type*)0)->field)))
-
-#define rtl_list_for_each(position, head)                                                          \
-  for (position = (head)->next; position != head; position = position->next)
-
-#define rtl_list_for_each_safe(position, n, head)                                                  \
-  for (position = (head)->next, n = position->next; position != (head);                            \
-    position = n, n = position->next)
-
-struct rtl_list_entry
+void rtl_list_init_head(struct rtl_list_entry* head)
 {
-  struct rtl_list_entry* prev;
-  struct rtl_list_entry* next;
-};
+  head->prev = head;
+  head->next = head;
+}
 
-void rtl_list_init_head(struct rtl_list_entry* head);
-int rtl_list_empty(const struct rtl_list_entry* head);
-void rtl_list_push_front(struct rtl_list_entry* head, struct rtl_list_entry* entry);
-void rtl_list_push_back(struct rtl_list_entry* head, struct rtl_list_entry* entry);
-void rtl_list_remove(const struct rtl_list_entry* entry);
+int rtl_list_empty(const struct rtl_list_entry* head)
+{
+  return head->next == head;
+}
+
+static void __rtl_list_insert(
+  struct rtl_list_entry* _new, struct rtl_list_entry* prev, struct rtl_list_entry* next)
+{
+  next->prev = _new;
+  _new->next = next;
+  _new->prev = prev;
+  prev->next = _new;
+}
+
+void rtl_list_push_front(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+{
+  __rtl_list_insert(entry, head, head->next);
+}
+
+void rtl_list_push_back(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+{
+  __rtl_list_insert(entry, head->prev, head);
+}
+
+static void __rtl_list_remove(struct rtl_list_entry* prev, struct rtl_list_entry* next)
+{
+  next->prev = prev;
+  prev->next = next;
+}
+
+void rtl_list_remove(const struct rtl_list_entry* entry)
+{
+  __rtl_list_remove(entry->prev, entry->next);
+}
