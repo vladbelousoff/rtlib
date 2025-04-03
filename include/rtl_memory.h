@@ -27,18 +27,30 @@
 #endif
 
 #ifdef RTL_DEBUG_BUILD
+/**
+ * @brief Allocates memory using the rtl memory manager.
+ * @param size The number of bytes to allocate.
+ * @return A pointer to the allocated memory, or NULL on failure.
+ * @note In debug builds (RTL_DEBUG_BUILD defined), this macro automatically
+ *       passes the file name and line number to track allocations.
+ */
 #define rtl_malloc(size) __rtl_malloc(__FILE__, __LINE__, size)
 #else
 #define rtl_malloc(size) __rtl_malloc(size)
 #endif
 
 #ifdef RTL_DEBUG_BUILD
+
+/**
+ * @brief Header structure prepended to memory allocations in debug builds.
+ *        Contains metadata for tracking memory leaks.
+ */
 struct rtl_memory_header
 {
-  struct rtl_list_entry link;
-  const char* file;
-  unsigned long line;
-  unsigned long size;
+  struct rtl_list_entry link; /**< List entry for tracking allocations. */
+  const char* file;           /**< File where the allocation occurred. */
+  unsigned long line;         /**< Line number where the allocation occurred. */
+  unsigned long size;         /**< Size of the allocated block (excluding header). */
 };
 #endif
 
@@ -48,7 +60,22 @@ void* __rtl_malloc(
 #endif
   unsigned long size);
 
+/**
+ * @brief Frees memory previously allocated by rtl_malloc().
+ * @param data Pointer to the memory block to free.
+ */
 void rtl_free(void* data);
 
+/**
+ * @brief Initializes the rtl memory management subsystem.
+ *        Must be called before any rtl_malloc() or rtl_free() calls.
+ *        In debug builds, initializes the allocation tracking list.
+ */
 void rtl_memory_init();
+
+/**
+ * @brief Cleans up the rtl memory management subsystem.
+ *        Should be called at program termination.
+ *        In debug builds, checks for memory leaks and reports them to stderr.
+ */
 void rtl_memory_cleanup();

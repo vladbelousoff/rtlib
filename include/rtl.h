@@ -22,5 +22,14 @@
 
 #pragma once
 
+/**
+ * @brief Initializes the runtime library subsystems.
+ *        Must be called once at the start of the application.
+ */
 void rtl_init();
+
+/**
+ * @brief Cleans up the runtime library subsystems.
+ *        Should be called once at the end of the application.
+ */
 void rtl_cleanup();

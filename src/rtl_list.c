@@ -33,6 +33,15 @@ int rtl_list_empty(const struct rtl_list_entry* head)
   return head->next == head;
 }
 
+/**
+ * @internal
+ * @brief Inserts a new entry between two known consecutive entries.
+ *        This is an internal function, list users should use
+ *        rtl_list_push_front() or rtl_list_push_back().
+ * @param _new Pointer to the new entry to be inserted.
+ * @param prev Pointer to the entry that will precede the new entry.
+ * @param next Pointer to the entry that will follow the new entry.
+ */
 static void __rtl_list_insert(
   struct rtl_list_entry* _new, struct rtl_list_entry* prev, struct rtl_list_entry* next)
 {
@@ -42,6 +51,11 @@ static void __rtl_list_insert(
   prev->next = _new;
 }
 
+/**
+ * @brief Adds a new entry to the front of the list.
+ * @param head Pointer to the list head entry.
+ * @param entry Pointer to the new entry to add.
+ */
 void rtl_list_push_front(struct rtl_list_entry* head, struct rtl_list_entry* entry)
 {
   __rtl_list_insert(entry, head, head->next);
@@ -52,6 +66,13 @@ void rtl_list_push_back(struct rtl_list_entry* head, struct rtl_list_entry* entr
   __rtl_list_insert(entry, head->prev, head);
 }
 
+/**
+ * @internal
+ * @brief Removes an entry by connecting its neighbors.
+ *        This is an internal function, list users should use rtl_list_remove().
+ * @param prev Pointer to the previous entry.
+ * @param next Pointer to the next entry.
+ */
 static void __rtl_list_remove(struct rtl_list_entry* prev, struct rtl_list_entry* next)
 {
   next->prev = prev;
