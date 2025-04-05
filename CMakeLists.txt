@@ -35,6 +35,9 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 # Create static or shared library
 add_library(rtlib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 
+# Create an alias target for consistent usage in other projects
+add_library(rtlib::rtlib ALIAS rtlib)
+
 # Specify include directories
 target_include_directories(rtlib PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -44,25 +47,6 @@ target_include_directories(rtlib PUBLIC
 # Add special define for the debug configuration
 target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_BUILD>
-)
-
-# Installation directives
-include(GNUInstallDirs)
-
-install(TARGETS rtlib
-        EXPORT rtlibTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-install(EXPORT rtlibTargets
-        FILE rtlibTargets.cmake
-        NAMESPACE rtlib::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/rtlib
 )
 
 # Testing executable (only built if this is the main project)
