@@ -28,7 +28,7 @@ void rtl_list_init_head(struct rtl_list_entry* head)
   head->next = head;
 }
 
-int rtl_list_empty(const struct rtl_list_entry* head)
+bool rtl_list_empty(const struct rtl_list_entry* head)
 {
   return head->next == head;
 }

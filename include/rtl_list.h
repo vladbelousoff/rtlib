@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 /**
  * @brief Get the struct for this entry.
  * @param address The address of the list entry structure.
@@ -71,7 +73,7 @@ void rtl_list_init_head(struct rtl_list_entry* head);
  * @param head Pointer to the list head entry.
  * @return Non-zero if the list is empty, 0 otherwise.
  */
-int rtl_list_empty(const struct rtl_list_entry* head);
+bool rtl_list_empty(const struct rtl_list_entry* head);
 
 /**
  * @brief Adds a new entry to the front of the list.
