@@ -36,7 +36,7 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 add_library(rtlib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 
 # Include directory for public headers
-target_include_directories(rtlib PUBLIC include)
+target_include_directories(rtlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Add special define for the debug configuration
 target_compile_definitions(rtlib PUBLIC
