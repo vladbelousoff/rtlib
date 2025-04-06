@@ -32,6 +32,7 @@
 struct rtl_source_location
 {
   const char* file;   /**< Source file name */
+  const char* func;   /**< Source function name */
   unsigned long line; /**< Source line number */
 };
 
@@ -39,7 +40,7 @@ struct rtl_source_location
  * @brief Creates a source location structure with current file and line.
  * @return A rtl_source_location structure initialized with current location.
  */
-#define RTL_SOURCE_LOCATION ((struct rtl_source_location){ __FILE__, __LINE__ })
+#define RTL_SOURCE_LOCATION ((struct rtl_source_location){ __FILE__, __FUNCTION__, __LINE__ })
 
 #ifdef RTL_DEBUG_BUILD
 #define rtl_malloc(size) __rtl_malloc(RTL_SOURCE_LOCATION, size)
@@ -91,4 +92,4 @@ void rtl_memory_init();
  *        Should be called at program termination.
  *        In debug builds, checks for memory leaks and reports them to stderr.
  */
-void rtl_memory_cleanup();
+void rtl_memory_term();

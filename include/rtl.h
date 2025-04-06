@@ -32,4 +32,4 @@ void rtl_init();
  * @brief Cleans up the runtime library subsystems.
  *        Should be called once at the end of the application.
  */
-void rtl_cleanup();
+void rtl_term();

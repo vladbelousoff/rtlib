@@ -82,7 +82,7 @@ void rtl_memory_init()
   rtl_log_d("Memory initialized\n");
 }
 
-void rtl_memory_cleanup()
+void rtl_memory_term()
 {
 #ifdef RTL_DEBUG_BUILD
   struct rtl_list_entry* entry;
@@ -90,8 +90,9 @@ void rtl_memory_cleanup()
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
     struct rtl_memory_header* header = rtl_list_record(entry, struct rtl_memory_header, link);
-    fprintf(stderr, "Leaked memory, file: %s, line: %lu, size: %lu", header->source_location.file,
-      header->source_location.line, header->size);
+    rtl_log_e("Leaked memory, file: %s, line: %lu, func: %s, size: %lu\n",
+      header->source_location.file, header->source_location.line, header->source_location.func,
+      header->size);
     rtl_list_remove(&header->link);
     free(header);
   }
