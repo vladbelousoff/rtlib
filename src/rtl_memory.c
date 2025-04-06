@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "rtl_log.h"
+
 #ifdef RTL_DEBUG_BUILD
 /**
  * @internal
@@ -77,6 +79,7 @@ void rtl_memory_init()
 #ifdef RTL_DEBUG_BUILD
   rtl_list_init_head(&rtl_memory_allocations);
 #endif
+  rtl_log_d("Memory initialized\n");
 }
 
 void rtl_memory_cleanup()
@@ -93,4 +96,5 @@ void rtl_memory_cleanup()
     free(header);
   }
 #endif
+  rtl_log_d("Memory cleaned up\n");
 }
