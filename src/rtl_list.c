@@ -22,7 +22,7 @@
 
 #include "rtl_list.h"
 
-void rtl_list_init_head(struct rtl_list_entry* head)
+void rtl_list_init(struct rtl_list_entry* head)
 {
   head->prev = head;
   head->next = head;

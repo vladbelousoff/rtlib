@@ -77,7 +77,7 @@ void rtl_free(void* data)
 void rtl_memory_init()
 {
 #ifdef RTL_DEBUG_BUILD
-  rtl_list_init_head(&rtl_memory_allocations);
+  rtl_list_init(&rtl_memory_allocations);
 #endif
   rtl_log_d("Memory initialized\n");
 }

@@ -66,7 +66,7 @@ struct rtl_list_entry
  * @brief Initializes the head of a list.
  * @param head Pointer to the list head entry.
  */
-void rtl_list_init_head(struct rtl_list_entry* head);
+void rtl_list_init(struct rtl_list_entry* head);
 
 /**
  * @brief Checks if a list is empty.
