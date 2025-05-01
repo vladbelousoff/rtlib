@@ -80,14 +80,14 @@ bool rtl_list_empty(const struct rtl_list_entry* head);
  * @param head Pointer to the list head entry.
  * @param entry Pointer to the new entry to add.
  */
-void rtl_list_push_front(struct rtl_list_entry* head, struct rtl_list_entry* entry);
+void rtl_list_add_head(struct rtl_list_entry* head, struct rtl_list_entry* entry);
 
 /**
  * @brief Adds a new entry to the back of the list.
  * @param head Pointer to the list head entry.
  * @param entry Pointer to the new entry to add.
  */
-void rtl_list_push_back(struct rtl_list_entry* head, struct rtl_list_entry* entry);
+void rtl_list_add_tail(struct rtl_list_entry* head, struct rtl_list_entry* entry);
 
 /**
  * @brief Removes an entry from the list.

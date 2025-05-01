@@ -50,7 +50,7 @@ void* __rtl_malloc(
   struct rtl_memory_header* header = (struct rtl_memory_header*)data;
   header->source_location = source_location;
   header->size = size;
-  rtl_list_push_back(&rtl_memory_allocations, &header->link);
+  rtl_list_add_tail(&rtl_memory_allocations, &header->link);
   // Mark the memory with 0x77 to be able to debug uninitialized memory
   memset(&data[sizeof(struct rtl_memory_header)], 0x77, size);
   // Return only the needed piece and hide the header

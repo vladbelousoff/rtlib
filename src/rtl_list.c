@@ -56,12 +56,12 @@ static void __rtl_list_insert(
  * @param head Pointer to the list head entry.
  * @param entry Pointer to the new entry to add.
  */
-void rtl_list_push_front(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+void rtl_list_add_head(struct rtl_list_entry* head, struct rtl_list_entry* entry)
 {
   __rtl_list_insert(entry, head, head->next);
 }
 
-void rtl_list_push_back(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+void rtl_list_add_tail(struct rtl_list_entry* head, struct rtl_list_entry* entry)
 {
   __rtl_list_insert(entry, head->prev, head);
 }
