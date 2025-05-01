@@ -92,4 +92,4 @@ void rtl_memory_init();
  *        Should be called at program termination.
  *        In debug builds, checks for memory leaks and reports them to stderr.
  */
-void rtl_memory_term();
+void rtl_memory_cleanup();

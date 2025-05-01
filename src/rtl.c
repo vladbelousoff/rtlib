@@ -29,7 +29,7 @@ void rtl_init()
   rtl_memory_init();
 }
 
-void rtl_term()
+void rtl_cleanup()
 {
-  rtl_memory_term();
+  rtl_memory_cleanup();
 }

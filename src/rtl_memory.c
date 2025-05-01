@@ -82,7 +82,7 @@ void rtl_memory_init()
   rtl_log_d("Memory initialized\n");
 }
 
-void rtl_memory_term()
+void rtl_memory_cleanup()
 {
 #ifdef RTL_DEBUG_BUILD
   struct rtl_list_entry* entry;

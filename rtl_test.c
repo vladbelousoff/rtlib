@@ -49,7 +49,7 @@ int main(int argc, char** argv)
   rtl_free(data);
 
   // Clean up the library
-  rtl_term();
+  rtl_cleanup();
 
   return 0;
 }
