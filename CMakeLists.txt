@@ -51,6 +51,15 @@ target_compile_definitions(rtlib PUBLIC
 
 # Testing executable (only built if this is the main project)
 if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    add_executable(rtl_test rtl_test.c)
-    target_link_libraries(rtl_test PRIVATE rtlib)
+    add_executable(all_tests all_tests.c)
+    target_link_libraries(all_tests PRIVATE rtlib)
+
+    # Enable testing
+    enable_testing()
+
+    # Add the test
+    add_test(
+            NAME all_tests
+            COMMAND all_tests
+    )
 endif ()

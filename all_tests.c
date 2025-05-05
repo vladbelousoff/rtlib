@@ -22,14 +22,52 @@
 
 #include "rtl.h"
 #include "rtl_memory.h"
+#include "rtl_test.h"
 
 #include <stdio.h>
 
-#define RTL_TEST_EQUAL(a, b)                                                                       \
-  if (!(a == b)) {                                                                                 \
-    fprintf(stderr, "%s != %s\n", #a, #b);                                                         \
-    return __LINE__;                                                                               \
-  }
+// Test memory allocation
+RTL_TEST_FUNCTION(test_memory_allocation)
+{
+  char* data = rtl_malloc(10);
+  RTL_TEST_NOT_NULL(data);
+
+#ifdef RTL_DEBUG_BUILD
+  const struct rtl_memory_header* header =
+    (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
+  RTL_TEST_EQUAL(header->size, 10);
+  RTL_TEST_EQUAL(header->source_location.line, __LINE__ - 7);
+#endif
+
+  rtl_free(data);
+  return 0;
+}
+
+// Test allocating zero bytes
+RTL_TEST_FUNCTION(test_zero_allocation)
+{
+  char* data = rtl_malloc(0);
+  RTL_TEST_NOT_NULL(data);
+  rtl_free(data);
+  return 0;
+}
+
+// Test multiple allocations and frees
+RTL_TEST_FUNCTION(test_multiple_allocations)
+{
+  char* data1 = rtl_malloc(5);
+  char* data2 = rtl_malloc(10);
+  char* data3 = rtl_malloc(15);
+
+  RTL_TEST_NOT_NULL(data1);
+  RTL_TEST_NOT_NULL(data2);
+  RTL_TEST_NOT_NULL(data3);
+
+  rtl_free(data2);
+  rtl_free(data1);
+  rtl_free(data3);
+  return 0;
+}
 
 int main(int argc, char** argv)
 {
@@ -39,17 +77,19 @@ int main(int argc, char** argv)
   // Init the library
   rtl_init();
 
-  char* data = rtl_malloc(10);
-#ifdef RTL_DEBUG_BUILD
-  const struct rtl_memory_header* header =
-    (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
-  RTL_TEST_EQUAL(header->size, 10);
-  RTL_TEST_EQUAL(header->source_location.line, 42);
-#endif
-  rtl_free(data);
+  // Init test framework
+  rtl_test_init();
+
+  // Run tests
+  RTL_RUN_TEST(test_memory_allocation);
+  RTL_RUN_TEST(test_zero_allocation);
+  RTL_RUN_TEST(test_multiple_allocations);
+
+  // Return summary status
+  const int summary = rtl_test_summary();
 
   // Clean up the library
   rtl_cleanup();
 
-  return 0;
+  return summary;
 }
