@@ -22,7 +22,7 @@
 
 #include "rtl_test.h"
 
-#include <stdio.h>
+#include "rtl_log.h"
 
 // Global test context
 struct rtl_test_context g_rtl_test_ctx = { 0 };
@@ -33,20 +33,20 @@ void rtl_test_init()
   g_rtl_test_ctx.tests_failed = 0;
   g_rtl_test_ctx.current_test_name = NULL;
 
-  printf("\n===== RTL TEST SUITE =====\n\n");
+  rtl_log_i("Test suite initialized\n");
 }
 
 int rtl_test_summary()
 {
-  printf("\n===== TEST SUMMARY =====\n");
-  printf("Tests run: %d\n", g_rtl_test_ctx.tests_run);
-  printf("Tests failed: %d\n", g_rtl_test_ctx.tests_failed);
+  rtl_log_i("Tests run: %d\n", g_rtl_test_ctx.tests_run);
 
   if (g_rtl_test_ctx.tests_failed > 0) {
-    printf("\nRESULT: FAILURE\n\n");
+    rtl_log_e("Tests failed: %d\n", g_rtl_test_ctx.tests_failed);
     return 1;
-  } else {
-    printf("\nRESULT: SUCCESS\n\n");
-    return 0;
   }
+
+  rtl_log_i("Tests failed: %d\n", g_rtl_test_ctx.tests_failed);
+  rtl_log_i("Tests passed: %d\n", g_rtl_test_ctx.tests_run - g_rtl_test_ctx.tests_failed);
+
+  return 0;
 }

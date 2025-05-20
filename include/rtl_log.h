@@ -42,10 +42,11 @@
 #define RTL_FILENAME ((char*)(strrchr(__FILE__, RTL_SEPARATOR) + 1))
 
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
-  printf("[%s] %s:%-3u (%s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
+  printf("[%s] %s:%u (%s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
 
 #if RTL_DEBUG_LEVEL >= 4
-#define rtl_log_i rtl_log
+#define rtl_log_i(_fmt, ...)                                                                       \
+  __log_printf("I", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_i(_fmt, ...)                                                                       \
   do {                                                                                             \

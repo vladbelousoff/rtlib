@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "rtl_log.h"
 
 /**
  * @brief Test context structure to maintain test state
@@ -69,9 +70,9 @@ int rtl_test_summary();
     int result = func();                                                                           \
     if (result != 0) {                                                                             \
       g_rtl_test_ctx.tests_failed++;                                                               \
-      fprintf(stderr, "TEST FAILED: %s at line %d\n", #func, result);                              \
+      rtl_log_e("TEST FAILED: %s at line %d\n", #func, result);                                    \
     } else {                                                                                       \
-      printf("TEST PASSED: %s\n", #func);                                                          \
+      rtl_log_i("TEST PASSED: %s\n", #func);                                                       \
     }                                                                                              \
   } while (0)
 
@@ -80,7 +81,7 @@ int rtl_test_summary();
  */
 #define RTL_TEST_EQUAL(a, b)                                                                       \
   if (!(a == b)) {                                                                                 \
-    fprintf(stderr, "%s:%d - FAILED: %s != %s\n", __FILE__, __LINE__, #a, #b);                     \
+    rtl_log_e("%s:%d - FAILED: %s != %s\n", __FILE__, __LINE__, #a, #b);                           \
     return __LINE__;                                                                               \
   }
 
@@ -89,7 +90,7 @@ int rtl_test_summary();
  */
 #define RTL_TEST_TRUE(condition)                                                                   \
   if (!(condition)) {                                                                              \
-    fprintf(stderr, "%s:%d - FAILED: %s is not true\n", __FILE__, __LINE__, #condition);           \
+    rtl_log_e("%s:%d - FAILED: %s is not true\n", __FILE__, __LINE__, #condition);                 \
     return __LINE__;                                                                               \
   }
 
@@ -98,7 +99,7 @@ int rtl_test_summary();
  */
 #define RTL_TEST_FALSE(condition)                                                                  \
   if (condition) {                                                                                 \
-    fprintf(stderr, "%s:%d - FAILED: %s is not false\n", __FILE__, __LINE__, #condition);          \
+    rtl_log_e("%s:%d - FAILED: %s is not false\n", __FILE__, __LINE__, #condition);                \
     return __LINE__;                                                                               \
   }
 
@@ -107,7 +108,7 @@ int rtl_test_summary();
  */
 #define RTL_TEST_NOT_NULL(ptr)                                                                     \
   if ((ptr) == NULL) {                                                                             \
-    fprintf(stderr, "%s:%d - FAILED: %s is NULL\n", __FILE__, __LINE__, #ptr);                     \
+    rtl_log_e("%s:%d - FAILED: %s is NULL\n", __FILE__, __LINE__, #ptr);                           \
     return __LINE__;                                                                               \
   }
 
@@ -116,6 +117,6 @@ int rtl_test_summary();
  */
 #define RTL_TEST_STR_EQUAL(a, b)                                                                   \
   if (strcmp((a), (b)) != 0) {                                                                     \
-    fprintf(stderr, "%s:%d - FAILED: string %s != %s\n", __FILE__, __LINE__, #a, #b);              \
+    rtl_log_e("%s:%d - FAILED: string %s != %s\n", __FILE__, __LINE__, #a, #b);                    \
     return __LINE__;                                                                               \
   }
