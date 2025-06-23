@@ -48,6 +48,8 @@ target_include_directories(rtlib PUBLIC
 target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_BUILD>
         $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
+        $<$<PLATFORM_ID:Windows>:_WIN64>
+        $<$<PLATFORM_ID:Windows>:WIN32_LEAN_AND_MEAN>
 )
 
 # Testing executable (only built if this is the main project)
@@ -70,9 +72,18 @@ if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     add_executable(rtlib_tests tests/rtlib_tests.c)
     target_link_libraries(rtlib_tests PRIVATE rtlib unity)
     
-    # Add the test
+    # Create threading test executable
+    add_executable(rtlib_thread_tests tests/rtlib_thread_tests.c)
+    target_link_libraries(rtlib_thread_tests PRIVATE rtlib unity)
+    
+    # Add the tests
     add_test(
         NAME rtlib_tests
         COMMAND rtlib_tests
+    )
+    
+    add_test(
+        NAME rtlib_thread_tests
+        COMMAND rtlib_thread_tests
     )
 endif ()
