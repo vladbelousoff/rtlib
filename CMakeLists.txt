@@ -47,6 +47,7 @@ target_include_directories(rtlib PUBLIC
 # Add special define for the debug configuration
 target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_BUILD>
+        $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
 )
 
 # Testing executable (only built if this is the main project)

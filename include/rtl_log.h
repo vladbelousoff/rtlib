@@ -23,7 +23,7 @@
 #pragma once
 
 #include <stdio.h>
-#include <string.h>
+#include <time.h>
 
 #ifndef RTL_DEBUG_LEVEL
 #ifndef RTL_DEBUG_BUILD
@@ -47,12 +47,57 @@
 #define RTL_COLOR_RED    "\033[31m"
 #define RTL_COLOR_GREEN  "\033[32m"
 
+// Log file functionality
+static FILE* rtl_get_log_file(void)
+{
+  static FILE* log_file = NULL;
+  static int initialized = 0;
+
+  if (!initialized) {
+    const time_t now = time(NULL);
+    const struct tm* tm_info = localtime(&now);
+    char filename[64];
+    strftime(filename, sizeof(filename), "logs_%d-%m-%Y_%H-%M-%S.txt", tm_info);
+    log_file = fopen(filename, "w");
+    initialized = 1;
+  }
+
+  return log_file;
+}
+
+// Time stamp functionality
+static const char* rtl_get_time_stamp(void)
+{
+  static char stamp[16];
+  const time_t now = time(NULL);
+  const struct tm* tm_info = localtime(&now);
+  strftime(stamp, sizeof(stamp), "%H:%M:%S", tm_info);
+  return stamp;
+}
+
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
-  printf("[%-s] [%-20s:%5u] (%-20s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
+  do {                                                                                             \
+    printf("[%-s|%-s] [%-30s:%5u] (%-30s) " fmt, lvl, rtl_get_time_stamp(), file, line, func,      \
+      ##__VA_ARGS__);                                                                              \
+    FILE* log_f = rtl_get_log_file();                                                              \
+    if (log_f) {                                                                                   \
+      fprintf(log_f, "[%-s|%-s] [%-30s:%5u] (%-30s) " fmt, lvl, rtl_get_time_stamp(), file, line,  \
+        func, ##__VA_ARGS__);                                                                      \
+      fflush(log_f);                                                                               \
+    }                                                                                              \
+  } while (0)
 
 #define __log_printf_color(lvl, color, file, line, func, fmt, ...)                                 \
-  printf("%s[%-s]%s [%-20s:%5u] (%-20s) " fmt, color, lvl, RTL_COLOR_RESET, file, line, func,      \
-    ##__VA_ARGS__)
+  do {                                                                                             \
+    printf("%s[%-s|%-s]%s [%-30s:%5u] (%-30s) " fmt, color, lvl, rtl_get_time_stamp(),             \
+      RTL_COLOR_RESET, file, line, func, ##__VA_ARGS__);                                           \
+    FILE* log_f = rtl_get_log_file();                                                              \
+    if (log_f) {                                                                                   \
+      fprintf(log_f, "[%-s|%-s] [%-30s:%5u] (%-30s) " fmt, lvl, rtl_get_time_stamp(), file, line,  \
+        func, ##__VA_ARGS__);                                                                      \
+      fflush(log_f);                                                                               \
+    }                                                                                              \
+  } while (0)
 
 #if RTL_DEBUG_LEVEL >= 4
 #define rtl_log_i(_fmt, ...)                                                                       \
