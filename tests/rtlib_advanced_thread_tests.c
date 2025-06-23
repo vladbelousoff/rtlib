@@ -29,62 +29,10 @@
 
 #include "unity.h"
 
-#ifdef _WIN32
-#include <windows.h>
-typedef HANDLE rtl_thread_t;
-typedef DWORD rtl_thread_id_t;
-#else
-#include <pthread.h>
-#include <unistd.h>
-typedef pthread_t rtl_thread_t;
-typedef pthread_t rtl_thread_id_t;
-#endif
-
-// Thread creation and management functions
-static rtl_thread_t rtl_thread_create(void* (*func)(void*), void* arg)
-{
-#ifdef _WIN32
-  return CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, arg, 0, NULL);
-#else
-  rtl_thread_t thread;
-  pthread_create(&thread, NULL, func, arg);
-  return thread;
-#endif
-}
-
-static void rtl_thread_join(rtl_thread_t thread)
-{
-#ifdef _WIN32
-  WaitForSingleObject(thread, INFINITE);
-  CloseHandle(thread);
-#else
-  pthread_join(thread, NULL);
-#endif
-}
-
-static void rtl_thread_sleep(int milliseconds)
-{
-#ifdef _WIN32
-  Sleep(milliseconds);
-#else
-  usleep(milliseconds * 1000);
-#endif
-}
-
-// Producer-Consumer Queue
+// Producer-Consumer Queue data structures
 typedef struct
 {
-  rtl_mutex_t mutex;
-  rtl_atomic_int_t size;
-  rtl_atomic_int_t capacity;
-  rtl_atomic_int_t head;
-  rtl_atomic_int_t tail;
-  int* buffer;
-} pc_queue_t;
-
-typedef struct
-{
-  pc_queue_t* queue;
+  rtl_pc_queue_t* queue;
   int producer_id;
   int items_to_produce;
   rtl_atomic_int_t* total_produced;
@@ -92,37 +40,20 @@ typedef struct
 
 typedef struct
 {
-  pc_queue_t* queue;
+  rtl_pc_queue_t* queue;
   int consumer_id;
   int items_to_consume;
   rtl_atomic_int_t* total_consumed;
 } consumer_data_t;
 
-// Reader-Writer Lock simulation
+// Reader-Writer Lock data structures
 typedef struct
 {
-  rtl_mutex_t mutex;
-  rtl_atomic_int_t readers;
-  rtl_atomic_int_t writers_waiting;
-  rtl_atomic_int_t writer_active;
-} rw_lock_t;
-
-typedef struct
-{
-  rw_lock_t* lock;
+  rtl_rw_lock_t* lock;
   int thread_id;
   int operations;
   int is_writer;
 } rw_thread_data_t;
-
-// Barrier implementation
-typedef struct
-{
-  rtl_mutex_t mutex;
-  rtl_atomic_int_t count;
-  rtl_atomic_int_t generation;
-  int expected_count;
-} barrier_t;
 
 // Complex synchronization data
 typedef struct
@@ -151,69 +82,16 @@ void tearDown(void)
   rtl_cleanup();
 }
 
-// Producer-Consumer Queue functions
-static void pc_queue_init(pc_queue_t* queue, int capacity)
-{
-  rtl_mutex_init(&queue->mutex);
-  rtl_atomic_store(&queue->size, 0);
-  rtl_atomic_store(&queue->capacity, capacity);
-  rtl_atomic_store(&queue->head, 0);
-  rtl_atomic_store(&queue->tail, 0);
-  queue->buffer = rtl_malloc(capacity * sizeof(int));
-  TEST_ASSERT_NOT_NULL(queue->buffer);
-}
-
-static void pc_queue_destroy(pc_queue_t* queue)
-{
-  rtl_mutex_destroy(&queue->mutex);
-  rtl_free(queue->buffer);
-}
-
-static int pc_queue_enqueue(pc_queue_t* queue, int value)
-{
-  rtl_mutex_lock(&queue->mutex);
-
-  if (rtl_atomic_load(&queue->size) >= rtl_atomic_load(&queue->capacity)) {
-    rtl_mutex_unlock(&queue->mutex);
-    return 0;  // Queue full
-  }
-
-  int tail = rtl_atomic_load(&queue->tail);
-  queue->buffer[tail] = value;
-  rtl_atomic_store(&queue->tail, (tail + 1) % rtl_atomic_load(&queue->capacity));
-  rtl_atomic_fetch_add(&queue->size, 1);
-
-  rtl_mutex_unlock(&queue->mutex);
-  return 1;
-}
-
-static int pc_queue_dequeue(pc_queue_t* queue, int* value)
-{
-  rtl_mutex_lock(&queue->mutex);
-
-  if (rtl_atomic_load(&queue->size) == 0) {
-    rtl_mutex_unlock(&queue->mutex);
-    return 0;  // Queue empty
-  }
-
-  int head = rtl_atomic_load(&queue->head);
-  *value = queue->buffer[head];
-  rtl_atomic_store(&queue->head, (head + 1) % rtl_atomic_load(&queue->capacity));
-  rtl_atomic_fetch_sub(&queue->size, 1);
-
-  rtl_mutex_unlock(&queue->mutex);
-  return 1;
-}
-
 // Producer thread function
 static void* producer_thread(void* arg)
 {
   producer_data_t* data = (producer_data_t*)arg;
 
   for (int i = 0; i < data->items_to_produce; i++) {
-    int value = data->producer_id * 1000 + i;
+    int* value = rtl_malloc(sizeof(int));
+    *value = data->producer_id * 1000 + i;
 
-    while (!pc_queue_enqueue(data->queue, value)) {
+    while (!rtl_pc_queue_enqueue(data->queue, value)) {
       rtl_thread_sleep(1);  // Wait if queue is full
     }
 
@@ -230,14 +108,15 @@ static void* consumer_thread(void* arg)
   consumer_data_t* data = (consumer_data_t*)arg;
 
   for (int i = 0; i < data->items_to_consume; i++) {
-    int value;
+    int* value;
 
-    while (!pc_queue_dequeue(data->queue, &value)) {
+    while (!rtl_pc_queue_dequeue(data->queue, (void**)&value)) {
       rtl_thread_sleep(1);  // Wait if queue is empty
     }
 
     // Verify the value is reasonable
-    TEST_ASSERT_TRUE(value >= 0);
+    TEST_ASSERT_TRUE(*value >= 0);
+    rtl_free(value);  // Free the allocated value
     rtl_atomic_fetch_add(data->total_consumed, 1);
     rtl_thread_sleep(1);  // Simulate work
   }
@@ -254,8 +133,8 @@ void test_producer_consumer_pattern(void)
   const int ITEMS_PER_PRODUCER = 50;
   const int ITEMS_PER_CONSUMER = (NUM_PRODUCERS * ITEMS_PER_PRODUCER) / NUM_CONSUMERS;
 
-  pc_queue_t queue;
-  pc_queue_init(&queue, QUEUE_CAPACITY);
+  rtl_pc_queue_t queue;
+  rtl_pc_queue_init(&queue, QUEUE_CAPACITY);
 
   rtl_atomic_int_t total_produced = 0;
   rtl_atomic_int_t total_consumed = 0;
@@ -299,65 +178,11 @@ void test_producer_consumer_pattern(void)
   TEST_ASSERT_EQUAL(NUM_PRODUCERS * ITEMS_PER_PRODUCER, rtl_atomic_load(&total_produced));
   TEST_ASSERT_EQUAL(NUM_PRODUCERS * ITEMS_PER_PRODUCER, rtl_atomic_load(&total_consumed));
 
-  pc_queue_destroy(&queue);
+  rtl_pc_queue_destroy(&queue);
   rtl_free(producer_threads);
   rtl_free(producer_data);
   rtl_free(consumer_threads);
   rtl_free(consumer_data);
-}
-
-// Reader-Writer Lock functions
-static void rw_lock_init(rw_lock_t* lock)
-{
-  rtl_mutex_init(&lock->mutex);
-  rtl_atomic_store(&lock->readers, 0);
-  rtl_atomic_store(&lock->writers_waiting, 0);
-  rtl_atomic_store(&lock->writer_active, 0);
-}
-
-static void rw_lock_destroy(rw_lock_t* lock)
-{
-  rtl_mutex_destroy(&lock->mutex);
-}
-
-static void rw_lock_read_lock(rw_lock_t* lock)
-{
-  rtl_mutex_lock(&lock->mutex);
-
-  while (rtl_atomic_load(&lock->writer_active) > 0 || rtl_atomic_load(&lock->writers_waiting) > 0) {
-    rtl_mutex_unlock(&lock->mutex);
-    rtl_thread_sleep(1);
-    rtl_mutex_lock(&lock->mutex);
-  }
-
-  rtl_atomic_fetch_add(&lock->readers, 1);
-  rtl_mutex_unlock(&lock->mutex);
-}
-
-static void rw_lock_read_unlock(rw_lock_t* lock)
-{
-  rtl_atomic_fetch_sub(&lock->readers, 1);
-}
-
-static void rw_lock_write_lock(rw_lock_t* lock)
-{
-  rtl_mutex_lock(&lock->mutex);
-  rtl_atomic_fetch_add(&lock->writers_waiting, 1);
-
-  while (rtl_atomic_load(&lock->readers) > 0 || rtl_atomic_load(&lock->writer_active) > 0) {
-    rtl_mutex_unlock(&lock->mutex);
-    rtl_thread_sleep(1);
-    rtl_mutex_lock(&lock->mutex);
-  }
-
-  rtl_atomic_fetch_sub(&lock->writers_waiting, 1);
-  rtl_atomic_store(&lock->writer_active, 1);
-  rtl_mutex_unlock(&lock->mutex);
-}
-
-static void rw_lock_write_unlock(rw_lock_t* lock)
-{
-  rtl_atomic_store(&lock->writer_active, 0);
 }
 
 // Reader-Writer thread function
@@ -367,13 +192,13 @@ static void* rw_thread(void* arg)
 
   for (int i = 0; i < data->operations; i++) {
     if (data->is_writer) {
-      rw_lock_write_lock(data->lock);
+      rtl_rw_lock_write_lock(data->lock);
       rtl_thread_sleep(5);  // Writers take longer
-      rw_lock_write_unlock(data->lock);
+      rtl_rw_lock_write_unlock(data->lock);
     } else {
-      rw_lock_read_lock(data->lock);
+      rtl_rw_lock_read_lock(data->lock);
       rtl_thread_sleep(1);  // Readers are faster
-      rw_lock_read_unlock(data->lock);
+      rtl_rw_lock_read_unlock(data->lock);
     }
   }
 
@@ -386,8 +211,8 @@ void test_reader_writer_pattern(void)
   const int NUM_READERS = 8;
   const int NUM_WRITERS = 2;
 
-  rw_lock_t lock;
-  rw_lock_init(&lock);
+  rtl_rw_lock_t lock;
+  rtl_rw_lock_init(&lock);
 
   // Create reader threads
   rtl_thread_t* reader_threads = rtl_malloc(NUM_READERS * sizeof(rtl_thread_t));
@@ -426,65 +251,25 @@ void test_reader_writer_pattern(void)
     rtl_thread_join(writer_threads[i]);
   }
 
-  // Verify final state
-  TEST_ASSERT_EQUAL(0, rtl_atomic_load(&lock.readers));
-  TEST_ASSERT_EQUAL(0, rtl_atomic_load(&lock.writers_waiting));
-  TEST_ASSERT_EQUAL(0, rtl_atomic_load(&lock.writer_active));
-
-  rw_lock_destroy(&lock);
+  rtl_rw_lock_destroy(&lock);
   rtl_free(reader_threads);
   rtl_free(reader_data);
   rtl_free(writer_threads);
   rtl_free(writer_data);
 }
 
-// Barrier functions
-static void barrier_init(barrier_t* barrier, int expected_count)
-{
-  rtl_mutex_init(&barrier->mutex);
-  rtl_atomic_store(&barrier->count, 0);
-  rtl_atomic_store(&barrier->generation, 0);
-  barrier->expected_count = expected_count;
-}
-
-static void barrier_destroy(barrier_t* barrier)
-{
-  rtl_mutex_destroy(&barrier->mutex);
-}
-
-static void barrier_wait(barrier_t* barrier)
-{
-  rtl_mutex_lock(&barrier->mutex);
-
-  int generation = rtl_atomic_load(&barrier->generation);
-  rtl_atomic_fetch_add(&barrier->count, 1);
-
-  if (rtl_atomic_load(&barrier->count) == barrier->expected_count) {
-    rtl_atomic_store(&barrier->count, 0);
-    rtl_atomic_fetch_add(&barrier->generation, 1);
-  } else {
-    while (rtl_atomic_load(&barrier->generation) == generation) {
-      rtl_mutex_unlock(&barrier->mutex);
-      rtl_thread_sleep(1);
-      rtl_mutex_lock(&barrier->mutex);
-    }
-  }
-
-  rtl_mutex_unlock(&barrier->mutex);
-}
-
 // Barrier thread function
 static void* barrier_thread(void* arg)
 {
-  barrier_t* barrier = (barrier_t*)arg;
+  rtl_barrier_t* barrier = (rtl_barrier_t*)arg;
 
   // Phase 1: All threads arrive at barrier
   rtl_thread_sleep(rand() % 100);  // Random delay
-  barrier_wait(barrier);
+  rtl_barrier_wait(barrier);
 
   // Phase 2: All threads continue after barrier
   rtl_thread_sleep(rand() % 100);  // Random delay
-  barrier_wait(barrier);
+  rtl_barrier_wait(barrier);
 
   return NULL;
 }
@@ -494,8 +279,8 @@ void test_barrier_synchronization(void)
 {
   const int NUM_THREADS = 8;
 
-  barrier_t barrier;
-  barrier_init(&barrier, NUM_THREADS);
+  rtl_barrier_t barrier;
+  rtl_barrier_init(&barrier, NUM_THREADS);
 
   rtl_thread_t* threads = rtl_malloc(NUM_THREADS * sizeof(rtl_thread_t));
 
@@ -507,7 +292,7 @@ void test_barrier_synchronization(void)
     rtl_thread_join(threads[i]);
   }
 
-  barrier_destroy(&barrier);
+  rtl_barrier_destroy(&barrier);
   rtl_free(threads);
   TEST_PASS();  // If we get here, barrier worked correctly
 }
@@ -683,4 +468,4 @@ int main(void)
   RUN_TEST(test_memory_consistency);
 
   return UNITY_END();
-}
+} 

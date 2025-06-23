@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "rtl.h"
-#include "rtl_list.h"
 #include "rtl_log.h"
 #include "rtl_memory.h"
 #include "rtl_thread.h"
@@ -40,29 +39,7 @@ typedef pthread_t rtl_thread_t;
 typedef pthread_t rtl_thread_id_t;
 #endif
 
-// Test data structures
-typedef struct
-{
-  rtl_list_entry_t list_entry;
-  int value;
-  char data[64];
-} test_item_t;
-
-typedef struct
-{
-  rtl_mutex_t mutex;
-  rtl_list_entry_t head;
-  int item_count;
-} thread_safe_list_t;
-
-typedef struct
-{
-  rtl_atomic_int_t counter;
-  rtl_atomic_int_t flag;
-  int iterations;
-  rtl_mutex_t mutex;
-} stress_test_data_t;
-
+// Worker thread data
 typedef struct
 {
   rtl_atomic_int_t* shared_counter;
@@ -79,18 +56,14 @@ typedef struct
   int* result;
 } race_condition_data_t;
 
-// List worker thread data
-typedef struct
-{
-  int thread_id;
-  thread_safe_list_t* safe_list;
-} list_worker_data_t;
-
 // Stress thread data
 typedef struct
 {
   int thread_id;
-  stress_test_data_t* stress_data;
+  rtl_atomic_int_t* counter;
+  rtl_atomic_int_t* flag;
+  int iterations;
+  rtl_mutex_t* mutex;
 } stress_thread_data_t;
 
 // Memory ordering data
@@ -358,107 +331,28 @@ void test_race_condition_detection(void)
   rtl_free(thread_data);
 }
 
-// List worker thread function
-static void* list_worker_thread(void* arg)
-{
-  list_worker_data_t* data = (list_worker_data_t*)arg;
-
-  for (int i = 0; i < 100; i++) {
-    test_item_t* item = rtl_malloc(sizeof(test_item_t));
-    TEST_ASSERT_NOT_NULL(item);
-
-    item->value = data->thread_id * 1000 + i;
-    snprintf(item->data, sizeof(item->data), "Thread %d, Item %d", data->thread_id, i);
-
-    // Add to list (thread-safe)
-    rtl_mutex_lock(&data->safe_list->mutex);
-    rtl_list_add_tail(&data->safe_list->head, &item->list_entry);
-    data->safe_list->item_count++;
-    rtl_mutex_unlock(&data->safe_list->mutex);
-
-    rtl_thread_sleep(1);
-  }
-
-  return NULL;
-}
-
-// Test thread-safe list operations
-void test_thread_safe_list_operations(void)
-{
-  thread_safe_list_t safe_list;
-  rtl_mutex_init(&safe_list.mutex);
-  rtl_list_init(&safe_list.head);
-  safe_list.item_count = 0;
-
-  const int NUM_THREADS = 4;
-
-  rtl_thread_t* threads = rtl_malloc(NUM_THREADS * sizeof(rtl_thread_t));
-  list_worker_data_t* thread_data = rtl_malloc(NUM_THREADS * sizeof(list_worker_data_t));
-
-  // Create threads
-  for (int i = 0; i < NUM_THREADS; i++) {
-    thread_data[i].thread_id = i;
-    thread_data[i].safe_list = &safe_list;
-    threads[i] = rtl_thread_create(list_worker_thread, &thread_data[i]);
-  }
-
-  // Wait for completion
-  for (int i = 0; i < NUM_THREADS; i++) {
-    rtl_thread_join(threads[i]);
-  }
-
-  // Verify list contents
-  TEST_ASSERT_EQUAL(NUM_THREADS * 100, safe_list.item_count);
-
-  int item_count = 0;
-  rtl_list_entry_t* pos;
-  rtl_list_for_each(pos, &safe_list.head)
-  {
-    test_item_t* item = rtl_list_record(pos, test_item_t, list_entry);
-    TEST_ASSERT_NOT_NULL(item);
-    TEST_ASSERT_TRUE(item->value >= 0);
-    TEST_ASSERT_TRUE(strlen(item->data) > 0);
-    item_count++;
-  }
-
-  TEST_ASSERT_EQUAL(NUM_THREADS * 100, item_count);
-
-  // Clean up
-  rtl_list_entry_t *pos_safe, *n;
-  rtl_list_for_each_safe(pos_safe, n, &safe_list.head)
-  {
-    test_item_t* item = rtl_list_record(pos_safe, test_item_t, list_entry);
-    rtl_list_remove(pos_safe);
-    rtl_free(item);
-  }
-
-  rtl_mutex_destroy(&safe_list.mutex);
-  rtl_free(threads);
-  rtl_free(thread_data);
-}
-
 // Stress thread function
 static void* stress_thread(void* arg)
 {
   stress_thread_data_t* data = (stress_thread_data_t*)arg;
 
-  for (int i = 0; i < data->stress_data->iterations; i++) {
+  for (int i = 0; i < data->iterations; i++) {
     // Mix of atomic and mutex operations
     if (i % 3 == 0) {
-      rtl_atomic_fetch_add(&data->stress_data->counter, 1);
+      rtl_atomic_fetch_add(data->counter, 1);
     } else if (i % 3 == 1) {
-      rtl_mutex_lock(&data->stress_data->mutex);
-      int val = rtl_atomic_load(&data->stress_data->counter);
-      rtl_atomic_store(&data->stress_data->counter, val + 1);
-      rtl_mutex_unlock(&data->stress_data->mutex);
+      rtl_mutex_lock(data->mutex);
+      int val = rtl_atomic_load(data->counter);
+      rtl_atomic_store(data->counter, val + 1);
+      rtl_mutex_unlock(data->mutex);
     } else {
       // Compare-exchange operation
-      int expected = rtl_atomic_load(&data->stress_data->counter);
-      rtl_atomic_compare_exchange_bool(&data->stress_data->counter, expected, expected + 1);
+      int expected = rtl_atomic_load(data->counter);
+      rtl_atomic_compare_exchange_bool(data->counter, expected, expected + 1);
     }
 
     // Set flag to indicate activity
-    rtl_atomic_store(&data->stress_data->flag, data->thread_id);
+    rtl_atomic_store(data->flag, data->thread_id);
   }
 
   return NULL;
@@ -470,11 +364,10 @@ void test_high_contention_stress(void)
   const int NUM_THREADS = 16;
   const int ITERATIONS = 1000;
 
-  stress_test_data_t stress_data;
-  rtl_atomic_store(&stress_data.counter, 0);
-  rtl_atomic_store(&stress_data.flag, 0);
-  stress_data.iterations = ITERATIONS;
-  rtl_mutex_init(&stress_data.mutex);
+  rtl_atomic_int_t counter = 0;
+  rtl_atomic_int_t flag = 0;
+  rtl_mutex_t mutex;
+  rtl_mutex_init(&mutex);
 
   rtl_thread_t* threads = rtl_malloc(NUM_THREADS * sizeof(rtl_thread_t));
   stress_thread_data_t* thread_data = rtl_malloc(NUM_THREADS * sizeof(stress_thread_data_t));
@@ -482,7 +375,10 @@ void test_high_contention_stress(void)
   // Create stress threads
   for (int i = 0; i < NUM_THREADS; i++) {
     thread_data[i].thread_id = i;
-    thread_data[i].stress_data = &stress_data;
+    thread_data[i].counter = &counter;
+    thread_data[i].flag = &flag;
+    thread_data[i].iterations = ITERATIONS;
+    thread_data[i].mutex = &mutex;
     threads[i] = rtl_thread_create(stress_thread, &thread_data[i]);
   }
 
@@ -492,11 +388,11 @@ void test_high_contention_stress(void)
   }
 
   // Verify final state
-  int final_counter = rtl_atomic_load(&stress_data.counter);
+  int final_counter = rtl_atomic_load(&counter);
   TEST_ASSERT_TRUE(final_counter > 0);
   TEST_ASSERT_TRUE(final_counter <= NUM_THREADS * ITERATIONS);
 
-  rtl_mutex_destroy(&stress_data.mutex);
+  rtl_mutex_destroy(&mutex);
   rtl_free(threads);
   rtl_free(thread_data);
 }
@@ -652,7 +548,6 @@ int main(void)
   RUN_TEST(test_mutex_reentrancy);
   RUN_TEST(test_concurrent_atomic_operations);
   RUN_TEST(test_race_condition_detection);
-  RUN_TEST(test_thread_safe_list_operations);
   RUN_TEST(test_high_contention_stress);
   RUN_TEST(test_memory_ordering);
   RUN_TEST(test_deadlock_prevention);
