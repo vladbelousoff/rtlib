@@ -38,23 +38,23 @@
 /**
  * @brief Structure to store source code location information.
  */
-struct rtl_source_location
+typedef struct rtl_source_location_t
 {
   const char* file;   /**< Source file name */
   unsigned long line; /**< Source line number */
-};
+} rtl_source_location_t;
 
 #ifdef RTL_DEBUG_BUILD
 /**
  * @brief Header structure prepended to memory allocations in debug builds.
  *        Contains metadata for tracking memory leaks.
  */
-struct rtl_memory_header
+typedef struct rtl_memory_header_t
 {
-  struct rtl_list_entry link;
-  struct rtl_source_location source_location;
+  rtl_list_entry_t link;
+  rtl_source_location_t source_location;
   unsigned long size;
-};
+} rtl_memory_header_t;
 #endif
 
 /**

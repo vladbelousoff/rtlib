@@ -43,8 +43,8 @@ void test_memory_allocation(void)
   TEST_ASSERT_NOT_NULL(data);
 
 #ifdef RTL_DEBUG_BUILD
-  const struct rtl_memory_header* header =
-    (struct rtl_memory_header*)(data - sizeof(struct rtl_memory_header));
+  const rtl_memory_header_t* header =
+    (rtl_memory_header_t*)(data - sizeof(rtl_memory_header_t));
   TEST_ASSERT_EQUAL(10, header->size);
   // Note: We can't easily test the line number as it would be different in the converted test
 #endif

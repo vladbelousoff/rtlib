@@ -33,7 +33,7 @@
  * @internal
  * @brief Head of the linked list used to track memory allocations in debug builds.
  */
-static struct rtl_list_entry rtl_memory_allocations;
+static rtl_list_entry_t rtl_memory_allocations;
 #endif
 
 void* __rtl_malloc(const char* file, unsigned long line, unsigned long size)
@@ -42,16 +42,16 @@ void* __rtl_malloc(const char* file, unsigned long line, unsigned long size)
   // It's not a memory leak, it's just a trick to add a bit more
   // info about allocated memory so...
   // ReSharper disable once CppDFAMemoryLeak
-  char* data = malloc(sizeof(struct rtl_memory_header) + size);
-  struct rtl_memory_header* header = (struct rtl_memory_header*)data;
+  char* data = malloc(sizeof(rtl_memory_header_t) + size);
+  rtl_memory_header_t* header = (rtl_memory_header_t*)data;
   header->source_location.file = file;
   header->source_location.line = line;
   header->size = size;
   rtl_list_add_tail(&rtl_memory_allocations, &header->link);
   // Mark the memory with 0x77 to be able to debug uninitialized memory
-  memset(&data[sizeof(struct rtl_memory_header)], 0x77, size);
+  memset(&data[sizeof(rtl_memory_header_t)], 0x77, size);
   // Return only the needed piece and hide the header
-  return &data[sizeof(struct rtl_memory_header)];
+  return &data[sizeof(rtl_memory_header_t)];
 #else
   return malloc(size);
 #endif
@@ -61,8 +61,8 @@ void rtl_free(void* data)
 {
 #ifdef RTL_DEBUG_BUILD
   // Find the header with meta information
-  struct rtl_memory_header* header =
-    (struct rtl_memory_header*)((char*)data - sizeof(struct rtl_memory_header));
+  rtl_memory_header_t* header =
+    (rtl_memory_header_t*)((char*)data - sizeof(rtl_memory_header_t));
   rtl_list_remove(&header->link);
   // Now we can free the real allocated piece
   free(header);
@@ -82,11 +82,11 @@ void rtl_memory_init()
 void rtl_memory_cleanup()
 {
 #ifdef RTL_DEBUG_BUILD
-  struct rtl_list_entry* entry;
-  struct rtl_list_entry* safe;
+  rtl_list_entry_t* entry;
+  rtl_list_entry_t* safe;
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
-    struct rtl_memory_header* header = rtl_list_record(entry, struct rtl_memory_header, link);
+    rtl_memory_header_t* header = rtl_list_record(entry, rtl_memory_header_t, link);
     rtl_log_e("Leaked memory, file: %s, line: %lu, size: %lu\n", header->source_location.file,
       header->source_location.line, header->size);
     rtl_list_remove(&header->link);

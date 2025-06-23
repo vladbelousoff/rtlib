@@ -22,13 +22,13 @@
 
 #include "rtl_list.h"
 
-void rtl_list_init(struct rtl_list_entry* head)
+void rtl_list_init(rtl_list_entry_t* head)
 {
   head->prev = head;
   head->next = head;
 }
 
-bool rtl_list_empty(const struct rtl_list_entry* head)
+bool rtl_list_empty(const rtl_list_entry_t* head)
 {
   return head->next == head;
 }
@@ -43,7 +43,7 @@ bool rtl_list_empty(const struct rtl_list_entry* head)
  * @param next Pointer to the entry that will follow the new entry.
  */
 static void __rtl_list_insert(
-  struct rtl_list_entry* _new, struct rtl_list_entry* prev, struct rtl_list_entry* next)
+  rtl_list_entry_t* _new, rtl_list_entry_t* prev, rtl_list_entry_t* next)
 {
   next->prev = _new;
   _new->next = next;
@@ -56,12 +56,12 @@ static void __rtl_list_insert(
  * @param head Pointer to the list head entry.
  * @param entry Pointer to the new entry to add.
  */
-void rtl_list_add_head(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+void rtl_list_add_head(rtl_list_entry_t* head, rtl_list_entry_t* entry)
 {
   __rtl_list_insert(entry, head, head->next);
 }
 
-void rtl_list_add_tail(struct rtl_list_entry* head, struct rtl_list_entry* entry)
+void rtl_list_add_tail(rtl_list_entry_t* head, rtl_list_entry_t* entry)
 {
   __rtl_list_insert(entry, head->prev, head);
 }
@@ -73,13 +73,13 @@ void rtl_list_add_tail(struct rtl_list_entry* head, struct rtl_list_entry* entry
  * @param prev Pointer to the previous entry.
  * @param next Pointer to the next entry.
  */
-static void __rtl_list_remove(struct rtl_list_entry* prev, struct rtl_list_entry* next)
+static void __rtl_list_remove(rtl_list_entry_t* prev, rtl_list_entry_t* next)
 {
   next->prev = prev;
   prev->next = next;
 }
 
-void rtl_list_remove(const struct rtl_list_entry* entry)
+void rtl_list_remove(const rtl_list_entry_t* entry)
 {
   __rtl_list_remove(entry->prev, entry->next);
 }
