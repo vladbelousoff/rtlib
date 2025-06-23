@@ -55,7 +55,7 @@ static rtl_atomic_int_t rtl_log_mutex_initialized = 0;
 static void rtl_log_mutex_init(void)
 {
   if (!rtl_atomic_compare_exchange_bool(&rtl_log_mutex_initialized, 0, 1)) {
-    return; // Already initialized
+    return;  // Already initialized
   }
   rtl_mutex_init(&rtl_log_mutex);
 }
@@ -77,8 +77,6 @@ static FILE* rtl_get_log_file(void)
   static FILE* log_file = NULL;
   static rtl_atomic_int_t initialized = 0;
 
-  rtl_log_mutex_lock();
-  
   if (!rtl_atomic_load(&initialized)) {
     const time_t now = time(NULL);
     const struct tm* tm_info = localtime(&now);
@@ -88,7 +86,6 @@ static FILE* rtl_get_log_file(void)
     rtl_atomic_store(&initialized, 1);
   }
 
-  rtl_log_mutex_unlock();
   return log_file;
 }
 
