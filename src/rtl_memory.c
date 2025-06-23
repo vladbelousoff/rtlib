@@ -36,11 +36,7 @@
 static struct rtl_list_entry rtl_memory_allocations;
 #endif
 
-void* __rtl_malloc(
-#ifdef RTL_DEBUG_BUILD
-  struct rtl_source_location source_location,
-#endif
-  unsigned long size)
+void* __rtl_malloc(const char* file, unsigned long line, unsigned long size)
 {
 #ifdef RTL_DEBUG_BUILD
   // It's not a memory leak, it's just a trick to add a bit more
@@ -48,7 +44,8 @@ void* __rtl_malloc(
   // ReSharper disable once CppDFAMemoryLeak
   char* data = malloc(sizeof(struct rtl_memory_header) + size);
   struct rtl_memory_header* header = (struct rtl_memory_header*)data;
-  header->source_location = source_location;
+  header->source_location.file = file;
+  header->source_location.line = line;
   header->size = size;
   rtl_list_add_tail(&rtl_memory_allocations, &header->link);
   // Mark the memory with 0x77 to be able to debug uninitialized memory
@@ -90,9 +87,8 @@ void rtl_memory_cleanup()
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
     struct rtl_memory_header* header = rtl_list_record(entry, struct rtl_memory_header, link);
-    rtl_log_e("Leaked memory, file: %s, line: %lu, func: %s, size: %lu\n",
-      header->source_location.file, header->source_location.line, header->source_location.func,
-      header->size);
+    rtl_log_e("Leaked memory, file: %s, line: %lu, size: %lu\n", header->source_location.file,
+      header->source_location.line, header->size);
     rtl_list_remove(&header->link);
     free(header);
   }

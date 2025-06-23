@@ -26,27 +26,23 @@
 #include "rtl_list.h"
 #endif
 
+#define RTL_NARGS(...)                 RTL_NARGS_(__VA_ARGS__, 3, 2, 1, 0)
+#define RTL_NARGS_(a, b, c, N, ...)    N
+#define RTL_CONCAT(a, b)               RTL_CONCAT_(a, b)
+#define RTL_CONCAT_(a, b)              a##b
+
+#define rtl_malloc(...)                RTL_CONCAT(rtl_malloc_, RTL_NARGS(__VA_ARGS__))(__VA_ARGS__)
+#define rtl_malloc_1(size)             __rtl_malloc(__FILE__, __LINE__, size)
+#define rtl_malloc_3(file, line, size) __rtl_malloc(file, line, size)
+
 /**
  * @brief Structure to store source code location information.
  */
 struct rtl_source_location
 {
   const char* file;   /**< Source file name */
-  const char* func;   /**< Source function name */
   unsigned long line; /**< Source line number */
 };
-
-/**
- * @brief Creates a source location structure with current file and line.
- * @return A rtl_source_location structure initialized with current location.
- */
-#define RTL_SOURCE_LOCATION ((struct rtl_source_location){ __FILE__, __FUNCTION__, __LINE__ })
-
-#ifdef RTL_DEBUG_BUILD
-#define rtl_malloc(size) __rtl_malloc(RTL_SOURCE_LOCATION, size)
-#else
-#define rtl_malloc(size) __rtl_malloc(size)
-#endif
 
 #ifdef RTL_DEBUG_BUILD
 /**
@@ -63,16 +59,13 @@ struct rtl_memory_header
 
 /**
  * @brief Internal memory allocation function.
- * @param source_location Source location information (only in debug builds).
+ * @param file Source file name where the allocation was requested.
+ * @param line Source line number where the allocation was requested.
  * @param size The number of bytes to allocate.
  * @return A pointer to the allocated memory, or NULL on failure.
  * @note Users should typically use the rtl_malloc() macro instead.
  */
-void* __rtl_malloc(
-#ifdef RTL_DEBUG_BUILD
-  struct rtl_source_location source_location,
-#endif
-  unsigned long size);
+void* __rtl_malloc(const char* file, unsigned long line, unsigned long size);
 
 /**
  * @brief Frees memory previously allocated by rtl_malloc().
