@@ -102,16 +102,16 @@ static inline void rtl_mutex_unlock(rtl_mutex_t* mutex)
 static inline rtl_atomic_int_t rtl_atomic_load(rtl_atomic_int_t* ptr)
 {
 #ifdef _WIN32
-  return *ptr;  // Simple load is atomic on x86/x64
+  return InterlockedCompareExchange(ptr, 0, 0);
 #else
-  return __sync_fetch_and_add(ptr, 0);
+  return __sync_val_compare_and_swap(ptr, 0, 0);
 #endif
 }
 
 static inline void rtl_atomic_store(rtl_atomic_int_t* ptr, rtl_atomic_int_t value)
 {
 #ifdef _WIN32
-  *ptr = value;  // Simple store is atomic on x86/x64
+  InterlockedExchange(ptr, value);
 #else
   __sync_synchronize();
   *ptr = value;
