@@ -26,6 +26,7 @@
 #include <windows.h>
 // have to go after windows.h
 #include <synchapi.h>
+#include <intrin.h>  // For atomic operations
 #else
 #include <pthread.h>
 #include <unistd.h>
@@ -101,7 +102,7 @@ static inline void rtl_mutex_unlock(rtl_mutex_t* mutex)
 static inline rtl_atomic_int_t rtl_atomic_load(rtl_atomic_int_t* ptr)
 {
 #ifdef _WIN32
-  return InterlockedCompareExchange(ptr, 0, 0);
+  return *ptr;  // Simple load is atomic on x86/x64
 #else
   return __sync_fetch_and_add(ptr, 0);
 #endif
@@ -110,7 +111,7 @@ static inline rtl_atomic_int_t rtl_atomic_load(rtl_atomic_int_t* ptr)
 static inline void rtl_atomic_store(rtl_atomic_int_t* ptr, rtl_atomic_int_t value)
 {
 #ifdef _WIN32
-  InterlockedExchange(ptr, value);
+  *ptr = value;  // Simple store is atomic on x86/x64
 #else
   __sync_synchronize();
   *ptr = value;
@@ -203,3 +204,39 @@ typedef struct rtl_barrier
 void rtl_barrier_init(rtl_barrier_t* barrier, int expected_count);
 void rtl_barrier_destroy(rtl_barrier_t* barrier);
 void rtl_barrier_wait(rtl_barrier_t* barrier);
+
+// Lock-free Queue (Single Producer, Single Consumer)
+typedef struct rtl_lockfree_queue
+{
+  rtl_atomic_int_t head;
+  rtl_atomic_int_t tail;
+  rtl_atomic_int_t size;
+  int capacity;
+  void** buffer;
+} rtl_lockfree_queue_t;
+
+void rtl_lockfree_queue_init(rtl_lockfree_queue_t* queue, int capacity);
+void rtl_lockfree_queue_destroy(rtl_lockfree_queue_t* queue);
+int rtl_lockfree_queue_enqueue(rtl_lockfree_queue_t* queue, void* value);
+int rtl_lockfree_queue_dequeue(rtl_lockfree_queue_t* queue, void** value);
+int rtl_lockfree_queue_is_empty(rtl_lockfree_queue_t* queue);
+int rtl_lockfree_queue_is_full(rtl_lockfree_queue_t* queue);
+int rtl_lockfree_queue_size(rtl_lockfree_queue_t* queue);
+
+// Lock-free Queue (Multiple Producer, Multiple Consumer)
+typedef struct rtl_lockfree_mpmc_queue
+{
+  rtl_atomic_int_t head;
+  rtl_atomic_int_t tail;
+  rtl_atomic_int_t size;
+  int capacity;
+  void** buffer;
+} rtl_lockfree_mpmc_queue_t;
+
+void rtl_lockfree_mpmc_queue_init(rtl_lockfree_mpmc_queue_t* queue, int capacity);
+void rtl_lockfree_mpmc_queue_destroy(rtl_lockfree_mpmc_queue_t* queue);
+int rtl_lockfree_mpmc_queue_enqueue(rtl_lockfree_mpmc_queue_t* queue, void* value);
+int rtl_lockfree_mpmc_queue_dequeue(rtl_lockfree_mpmc_queue_t* queue, void** value);
+int rtl_lockfree_mpmc_queue_is_empty(rtl_lockfree_mpmc_queue_t* queue);
+int rtl_lockfree_mpmc_queue_is_full(rtl_lockfree_mpmc_queue_t* queue);
+int rtl_lockfree_mpmc_queue_size(rtl_lockfree_mpmc_queue_t* queue);

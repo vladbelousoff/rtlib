@@ -66,22 +66,47 @@ rtl_thread_id_t rtl_thread_get_id(void)
 // Producer-Consumer Queue functions
 void rtl_pc_queue_init(rtl_pc_queue_t* queue, int capacity)
 {
+  if (!queue || capacity <= 0) {
+    return;  // Invalid parameters
+  }
+  
   rtl_mutex_init(&queue->mutex);
   rtl_atomic_store(&queue->size, 0);
   rtl_atomic_store(&queue->capacity, capacity);
   rtl_atomic_store(&queue->head, 0);
   rtl_atomic_store(&queue->tail, 0);
+  
+  // Allocate buffer with error checking
   queue->buffer = rtl_malloc(capacity * sizeof(void*));
+  if (!queue->buffer) {
+    // If allocation fails, set buffer to NULL and return
+    queue->buffer = NULL;
+    return;
+  }
+  
+  // Initialize buffer to NULL
+  for (int i = 0; i < capacity; i++) {
+    queue->buffer[i] = NULL;
+  }
 }
 
 void rtl_pc_queue_destroy(rtl_pc_queue_t* queue)
 {
+  if (!queue) return;
+  
   rtl_mutex_destroy(&queue->mutex);
-  rtl_free(queue->buffer);
+  if (queue->buffer) {
+    rtl_free(queue->buffer);
+    queue->buffer = NULL;
+  }
 }
 
 int rtl_pc_queue_enqueue(rtl_pc_queue_t* queue, void* value)
 {
+  if (!queue || !queue->buffer) {
+    return 0;  // Invalid queue
+  }
+  
   rtl_mutex_lock(&queue->mutex);
 
   if (rtl_atomic_load(&queue->size) >= rtl_atomic_load(&queue->capacity)) {
@@ -100,6 +125,10 @@ int rtl_pc_queue_enqueue(rtl_pc_queue_t* queue, void* value)
 
 int rtl_pc_queue_dequeue(rtl_pc_queue_t* queue, void** value)
 {
+  if (!queue || !queue->buffer || !value) {
+    return 0;  // Invalid parameters
+  }
+  
   rtl_mutex_lock(&queue->mutex);
 
   if (rtl_atomic_load(&queue->size) == 0) {
@@ -118,22 +147,27 @@ int rtl_pc_queue_dequeue(rtl_pc_queue_t* queue, void** value)
 
 int rtl_pc_queue_is_empty(rtl_pc_queue_t* queue)
 {
+  if (!queue) return 1;
   return rtl_atomic_load(&queue->size) == 0;
 }
 
 int rtl_pc_queue_is_full(rtl_pc_queue_t* queue)
 {
+  if (!queue) return 1;
   return rtl_atomic_load(&queue->size) >= rtl_atomic_load(&queue->capacity);
 }
 
 int rtl_pc_queue_size(rtl_pc_queue_t* queue)
 {
+  if (!queue) return 0;
   return rtl_atomic_load(&queue->size);
 }
 
 // Reader-Writer Lock functions
 void rtl_rw_lock_init(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
+  
   rtl_mutex_init(&lock->mutex);
   rtl_atomic_store(&lock->readers, 0);
   rtl_atomic_store(&lock->writers_waiting, 0);
@@ -142,11 +176,14 @@ void rtl_rw_lock_init(rtl_rw_lock_t* lock)
 
 void rtl_rw_lock_destroy(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
   rtl_mutex_destroy(&lock->mutex);
 }
 
 void rtl_rw_lock_read_lock(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
+  
   rtl_mutex_lock(&lock->mutex);
 
   while (rtl_atomic_load(&lock->writer_active) > 0 || rtl_atomic_load(&lock->writers_waiting) > 0) {
@@ -161,11 +198,14 @@ void rtl_rw_lock_read_lock(rtl_rw_lock_t* lock)
 
 void rtl_rw_lock_read_unlock(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
   rtl_atomic_fetch_sub(&lock->readers, 1);
 }
 
 void rtl_rw_lock_write_lock(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
+  
   rtl_mutex_lock(&lock->mutex);
   rtl_atomic_fetch_add(&lock->writers_waiting, 1);
 
@@ -182,12 +222,17 @@ void rtl_rw_lock_write_lock(rtl_rw_lock_t* lock)
 
 void rtl_rw_lock_write_unlock(rtl_rw_lock_t* lock)
 {
+  if (!lock) return;
   rtl_atomic_store(&lock->writer_active, 0);
 }
 
 // Barrier functions
 void rtl_barrier_init(rtl_barrier_t* barrier, int expected_count)
 {
+  if (!barrier || expected_count <= 0) {
+    return;  // Invalid parameters
+  }
+  
   rtl_mutex_init(&barrier->mutex);
   rtl_atomic_store(&barrier->count, 0);
   rtl_atomic_store(&barrier->generation, 0);
@@ -196,11 +241,14 @@ void rtl_barrier_init(rtl_barrier_t* barrier, int expected_count)
 
 void rtl_barrier_destroy(rtl_barrier_t* barrier)
 {
+  if (!barrier) return;
   rtl_mutex_destroy(&barrier->mutex);
 }
 
 void rtl_barrier_wait(rtl_barrier_t* barrier)
 {
+  if (!barrier) return;
+  
   rtl_mutex_lock(&barrier->mutex);
 
   int generation = rtl_atomic_load(&barrier->generation);
@@ -218,4 +266,202 @@ void rtl_barrier_wait(rtl_barrier_t* barrier)
   }
 
   rtl_mutex_unlock(&barrier->mutex);
+}
+
+// Lock-free Queue (Single Producer, Single Consumer) functions
+void rtl_lockfree_queue_init(rtl_lockfree_queue_t* queue, int capacity)
+{
+  rtl_atomic_store(&queue->head, 0);
+  rtl_atomic_store(&queue->tail, 0);
+  rtl_atomic_store(&queue->size, 0);
+  queue->capacity = capacity;
+  queue->buffer = rtl_malloc(capacity * sizeof(void*));
+  
+  // Initialize buffer to NULL to prevent accessing uninitialized memory
+  for (int i = 0; i < capacity; i++) {
+    queue->buffer[i] = NULL;
+  }
+}
+
+void rtl_lockfree_queue_destroy(rtl_lockfree_queue_t* queue)
+{
+  if (queue->buffer) {
+    rtl_free(queue->buffer);
+    queue->buffer = NULL;
+  }
+}
+
+int rtl_lockfree_queue_enqueue(rtl_lockfree_queue_t* queue, void* value)
+{
+  if (!queue || !queue->buffer) {
+    return 0;  // Invalid queue
+  }
+  
+  int tail = rtl_atomic_load(&queue->tail);
+  int next_tail = (tail + 1) % queue->capacity;
+  
+  // Check if queue is full - use atomic load to get consistent view
+  int head = rtl_atomic_load(&queue->head);
+  if (next_tail == head) {
+    return 0;  // Queue full
+  }
+  
+  // Store the value
+  queue->buffer[tail] = value;
+  
+  // Update tail atomically - this makes the value visible to consumer
+  rtl_atomic_store(&queue->tail, next_tail);
+  rtl_atomic_fetch_add(&queue->size, 1);
+  
+  return 1;
+}
+
+int rtl_lockfree_queue_dequeue(rtl_lockfree_queue_t* queue, void** value)
+{
+  if (!queue || !queue->buffer || !value) {
+    return 0;  // Invalid parameters
+  }
+  
+  int head = rtl_atomic_load(&queue->head);
+  
+  // Check if queue is empty - use atomic load to get consistent view
+  int tail = rtl_atomic_load(&queue->tail);
+  if (head == tail) {
+    return 0;  // Queue empty
+  }
+  
+  // Load the value
+  *value = queue->buffer[head];
+  
+  // Update head atomically - this makes the slot available for reuse
+  int next_head = (head + 1) % queue->capacity;
+  rtl_atomic_store(&queue->head, next_head);
+  rtl_atomic_fetch_sub(&queue->size, 1);
+  
+  return 1;
+}
+
+int rtl_lockfree_queue_is_empty(rtl_lockfree_queue_t* queue)
+{
+  if (!queue) return 1;
+  return rtl_atomic_load(&queue->head) == rtl_atomic_load(&queue->tail);
+}
+
+int rtl_lockfree_queue_is_full(rtl_lockfree_queue_t* queue)
+{
+  if (!queue) return 1;
+  int tail = rtl_atomic_load(&queue->tail);
+  int next_tail = (tail + 1) % queue->capacity;
+  return next_tail == rtl_atomic_load(&queue->head);
+}
+
+int rtl_lockfree_queue_size(rtl_lockfree_queue_t* queue)
+{
+  if (!queue) return 0;
+  return rtl_atomic_load(&queue->size);
+}
+
+// Lock-free Queue (Multiple Producer, Multiple Consumer) functions
+void rtl_lockfree_mpmc_queue_init(rtl_lockfree_mpmc_queue_t* queue, int capacity)
+{
+  rtl_atomic_store(&queue->head, 0);
+  rtl_atomic_store(&queue->tail, 0);
+  rtl_atomic_store(&queue->size, 0);
+  queue->capacity = capacity;
+  queue->buffer = rtl_malloc(capacity * sizeof(void*));
+  
+  // Initialize buffer to NULL to prevent accessing uninitialized memory
+  for (int i = 0; i < capacity; i++) {
+    queue->buffer[i] = NULL;
+  }
+}
+
+void rtl_lockfree_mpmc_queue_destroy(rtl_lockfree_mpmc_queue_t* queue)
+{
+  if (queue->buffer) {
+    rtl_free(queue->buffer);
+    queue->buffer = NULL;
+  }
+}
+
+int rtl_lockfree_mpmc_queue_enqueue(rtl_lockfree_mpmc_queue_t* queue, void* value)
+{
+  if (!queue || !queue->buffer) {
+    return 0;  // Invalid queue
+  }
+  
+  int tail, next_tail;
+  int head;
+  
+  do {
+    tail = rtl_atomic_load(&queue->tail);
+    next_tail = (tail + 1) % queue->capacity;
+    
+    // Check if queue is full
+    head = rtl_atomic_load(&queue->head);
+    if (next_tail == head) {
+      return 0;  // Queue full
+    }
+    
+    // Try to reserve the slot using CAS
+  } while (!rtl_atomic_compare_exchange_bool(&queue->tail, tail, next_tail));
+  
+  // Store the value
+  queue->buffer[tail] = value;
+  rtl_atomic_fetch_add(&queue->size, 1);
+  
+  return 1;
+}
+
+int rtl_lockfree_mpmc_queue_dequeue(rtl_lockfree_mpmc_queue_t* queue, void** value)
+{
+  if (!queue || !queue->buffer || !value) {
+    return 0;  // Invalid parameters
+  }
+  
+  int head, next_head;
+  int tail;
+  void* temp_value;
+  
+  do {
+    head = rtl_atomic_load(&queue->head);
+    
+    // Check if queue is empty
+    tail = rtl_atomic_load(&queue->tail);
+    if (head == tail) {
+      return 0;  // Queue empty
+    }
+    
+    // Load the value
+    temp_value = queue->buffer[head];
+    next_head = (head + 1) % queue->capacity;
+    
+    // Try to reserve the slot using CAS
+  } while (!rtl_atomic_compare_exchange_bool(&queue->head, head, next_head));
+  
+  // Return the value
+  *value = temp_value;
+  rtl_atomic_fetch_sub(&queue->size, 1);
+  
+  return 1;
+}
+
+int rtl_lockfree_mpmc_queue_is_empty(rtl_lockfree_mpmc_queue_t* queue)
+{
+  if (!queue) return 1;
+  return rtl_atomic_load(&queue->head) == rtl_atomic_load(&queue->tail);
+}
+
+int rtl_lockfree_mpmc_queue_is_full(rtl_lockfree_mpmc_queue_t* queue)
+{
+  if (!queue) return 1;
+  int tail = rtl_atomic_load(&queue->tail);
+  int next_tail = (tail + 1) % queue->capacity;
+  return next_tail == rtl_atomic_load(&queue->head);
+}
+
+int rtl_lockfree_mpmc_queue_size(rtl_lockfree_mpmc_queue_t* queue)
+{
+  if (!queue) return 0;
+  return rtl_atomic_load(&queue->size);
 } 
