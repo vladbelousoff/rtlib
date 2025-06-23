@@ -42,11 +42,11 @@
 #define RTL_FILENAME ((char*)(strrchr(__FILE__, RTL_SEPARATOR) + 1))
 
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
-  printf("[%s] %s:%u (%s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
+  printf("[%-s] [%-20s:%5u] (%-20s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
 
 #if RTL_DEBUG_LEVEL >= 4
 #define rtl_log_i(_fmt, ...)                                                                       \
-  __log_printf("I", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf("INF", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_i(_fmt, ...)                                                                       \
   do {                                                                                             \
@@ -55,7 +55,7 @@
 
 #if RTL_DEBUG_LEVEL >= 3
 #define rtl_log_d(_fmt, ...)                                                                       \
-  __log_printf("D", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf("DBG", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_d(_fmt, ...)                                                                       \
   do {                                                                                             \
@@ -64,7 +64,7 @@
 
 #if RTL_DEBUG_LEVEL >= 2
 #define rtl_log_w(_fmt, ...)                                                                       \
-  __log_printf("W", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf("WRN", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_w(_fmt, ...)                                                                       \
   do {                                                                                             \
@@ -73,7 +73,7 @@
 
 #if RTL_DEBUG_LEVEL >= 1
 #define rtl_log_e(_fmt, ...)                                                                       \
-  __log_printf("E", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf("ERR", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_e(_fmt, ...)                                                                       \
   do {                                                                                             \
