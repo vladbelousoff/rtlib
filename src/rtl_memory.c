@@ -61,8 +61,7 @@ void rtl_free(void* data)
 {
 #ifdef RTL_DEBUG_BUILD
   // Find the header with meta information
-  rtl_memory_header_t* header =
-    (rtl_memory_header_t*)((char*)data - sizeof(rtl_memory_header_t));
+  rtl_memory_header_t* header = (rtl_memory_header_t*)((char*)data - sizeof(rtl_memory_header_t));
   rtl_list_remove(&header->link);
   // Now we can free the real allocated piece
   free(header);
