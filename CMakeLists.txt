@@ -51,15 +51,27 @@ target_compile_definitions(rtlib PUBLIC
 
 # Testing executable (only built if this is the main project)
 if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    add_executable(all_tests all_tests.c)
-    target_link_libraries(all_tests PRIVATE rtlib)
-
     # Enable testing
     enable_testing()
-
+    
+    # Include FetchContent for Unity
+    include(FetchContent)
+    
+    # Fetch and configure Unity
+    FetchContent_Declare(
+        unity
+        GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
+        GIT_TAG v2.5.2
+    )
+    FetchContent_MakeAvailable(unity)
+    
+    # Create test executable
+    add_executable(rtlib_tests tests/rtlib_tests.c)
+    target_link_libraries(rtlib_tests PRIVATE rtlib unity)
+    
     # Add the test
     add_test(
-            NAME all_tests
-            COMMAND all_tests
+        NAME rtlib_tests
+        COMMAND rtlib_tests
     )
 endif ()
