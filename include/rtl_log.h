@@ -41,8 +41,18 @@
 
 #define RTL_FILENAME ((char*)(strrchr(__FILE__, RTL_SEPARATOR) + 1))
 
+// ANSI color codes
+#define RTL_COLOR_RESET  "\033[0m"
+#define RTL_COLOR_YELLOW "\033[33m"
+#define RTL_COLOR_RED    "\033[31m"
+#define RTL_COLOR_GREEN  "\033[32m"
+
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
   printf("[%-s] [%-20s:%5u] (%-20s) " fmt, lvl, file, line, func, ##__VA_ARGS__)
+
+#define __log_printf_color(lvl, color, file, line, func, fmt, ...)                                 \
+  printf("%s[%-s]%s [%-20s:%5u] (%-20s) " fmt, color, lvl, RTL_COLOR_RESET, file, line, func,      \
+    ##__VA_ARGS__)
 
 #if RTL_DEBUG_LEVEL >= 4
 #define rtl_log_i(_fmt, ...)                                                                       \
@@ -55,7 +65,8 @@
 
 #if RTL_DEBUG_LEVEL >= 3
 #define rtl_log_d(_fmt, ...)                                                                       \
-  __log_printf("DBG", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf_color(                                                                              \
+    "DBG", RTL_COLOR_GREEN, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_d(_fmt, ...)                                                                       \
   do {                                                                                             \
@@ -64,7 +75,8 @@
 
 #if RTL_DEBUG_LEVEL >= 2
 #define rtl_log_w(_fmt, ...)                                                                       \
-  __log_printf("WRN", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf_color(                                                                              \
+    "WRN", RTL_COLOR_YELLOW, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_w(_fmt, ...)                                                                       \
   do {                                                                                             \
@@ -73,7 +85,8 @@
 
 #if RTL_DEBUG_LEVEL >= 1
 #define rtl_log_e(_fmt, ...)                                                                       \
-  __log_printf("ERR", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
+  __log_printf_color(                                                                              \
+    "ERR", RTL_COLOR_RED, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
 #define rtl_log_e(_fmt, ...)                                                                       \
   do {                                                                                             \
