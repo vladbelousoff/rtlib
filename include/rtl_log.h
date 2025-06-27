@@ -25,14 +25,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#ifndef RTL_DEBUG_LEVEL
-#ifndef RTL_DEBUG_BUILD
-#define RTL_DEBUG_LEVEL 1
-#else
-#define RTL_DEBUG_LEVEL 4
-#endif
-#endif
-
 #ifdef _WIN32
 #define RTL_SEPARATOR '\\'
 #else

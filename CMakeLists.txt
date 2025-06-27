@@ -47,6 +47,10 @@ target_include_directories(rtlib PUBLIC
 # Add special define for the debug configuration
 target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_BUILD>
+        $<$<CONFIG:Debug>:RTL_DEBUG_LEVEL=4>
+        $<$<CONFIG:Release>:RTL_DEBUG_LEVEL=1>
+        $<$<CONFIG:RelWithDebInfo>:RTL_DEBUG_LEVEL=2>
+        $<$<CONFIG:MinSizeRel>:RTL_DEBUG_LEVEL=1>
         $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
 )
 
