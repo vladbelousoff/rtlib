@@ -70,27 +70,9 @@ if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     add_executable(rtlib_tests tests/rtlib_tests.c)
     target_link_libraries(rtlib_tests PRIVATE rtlib unity)
     
-    # Create threading test executable
-    add_executable(rtlib_thread_tests tests/rtlib_thread_tests.c)
-    target_link_libraries(rtlib_thread_tests PRIVATE rtlib unity)
-    
-    # Create advanced threading test executable
-    add_executable(rtlib_advanced_thread_tests tests/rtlib_advanced_thread_tests.c)
-    target_link_libraries(rtlib_advanced_thread_tests PRIVATE rtlib unity)
-    
     # Add the tests
     add_test(
         NAME rtlib_tests
         COMMAND rtlib_tests
-    )
-    
-    add_test(
-        NAME rtlib_thread_tests
-        COMMAND rtlib_thread_tests
-    )
-    
-    add_test(
-        NAME rtlib_advanced_thread_tests
-        COMMAND rtlib_advanced_thread_tests
     )
 endif ()

@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "rtl_thread.h"
 
 #ifndef RTL_DEBUG_LEVEL
 #ifndef RTL_DEBUG_BUILD
@@ -48,42 +47,19 @@
 #define RTL_COLOR_RED    "\033[31m"
 #define RTL_COLOR_GREEN  "\033[32m"
 
-// Global mutex for thread safety
-static rtl_mutex_t rtl_log_mutex;
-static rtl_atomic_int_t rtl_log_mutex_initialized = 0;
-
-static void rtl_log_mutex_init(void)
-{
-  if (!rtl_atomic_compare_exchange_bool(&rtl_log_mutex_initialized, 0, 1)) {
-    return;  // Already initialized
-  }
-  rtl_mutex_init(&rtl_log_mutex);
-}
-
-static void rtl_log_mutex_lock(void)
-{
-  rtl_log_mutex_init();
-  rtl_mutex_lock(&rtl_log_mutex);
-}
-
-static void rtl_log_mutex_unlock(void)
-{
-  rtl_mutex_unlock(&rtl_log_mutex);
-}
-
 // Log file functionality
 static FILE* rtl_get_log_file(void)
 {
   static FILE* log_file = NULL;
-  static rtl_atomic_int_t initialized = 0;
+  static int initialized = 0;
 
-  if (!rtl_atomic_load(&initialized)) {
+  if (!initialized) {
     const time_t now = time(NULL);
     const struct tm* tm_info = localtime(&now);
     char filename[64];
     strftime(filename, sizeof(filename), "logs_%d-%m-%Y_%H-%M-%S.txt", tm_info);
     log_file = fopen(filename, "w");
-    rtl_atomic_store(&initialized, 1);
+    initialized = 1;
   }
 
   return log_file;
@@ -101,7 +77,6 @@ static const char* rtl_get_time_stamp(void)
 
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
   do {                                                                                             \
-    rtl_log_mutex_lock();                                                                          \
     printf("[%-s|%-s] [%-30s:%5u] (%-30s) " fmt, lvl, rtl_get_time_stamp(), file, line, func,      \
       ##__VA_ARGS__);                                                                              \
     FILE* log_f = rtl_get_log_file();                                                              \
@@ -110,12 +85,10 @@ static const char* rtl_get_time_stamp(void)
         func, ##__VA_ARGS__);                                                                      \
       fflush(log_f);                                                                               \
     }                                                                                              \
-    rtl_log_mutex_unlock();                                                                        \
   } while (0)
 
 #define __log_printf_color(lvl, color, file, line, func, fmt, ...)                                 \
   do {                                                                                             \
-    rtl_log_mutex_lock();                                                                          \
     printf("%s[%-s|%-s]%s [%-30s:%5u] (%-30s) " fmt, color, lvl, rtl_get_time_stamp(),             \
       RTL_COLOR_RESET, file, line, func, ##__VA_ARGS__);                                           \
     FILE* log_f = rtl_get_log_file();                                                              \
@@ -124,7 +97,6 @@ static const char* rtl_get_time_stamp(void)
         func, ##__VA_ARGS__);                                                                      \
       fflush(log_f);                                                                               \
     }                                                                                              \
-    rtl_log_mutex_unlock();                                                                        \
   } while (0)
 
 #if RTL_DEBUG_LEVEL >= 4

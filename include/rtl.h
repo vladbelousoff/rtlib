@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include "rtl_thread.h"
-
 /**
  * @brief Initializes the runtime library subsystems.
  *        Must be called once at the start of the application.
