@@ -24,7 +24,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(rtlib LANGUAGES C)
 
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
@@ -50,6 +50,7 @@ target_compile_definitions(rtlib PUBLIC
         $<$<CONFIG:Debug>:RTL_DEBUG_LEVEL=4>
         $<$<CONFIG:Release>:RTL_DEBUG_LEVEL=1>
         $<$<CONFIG:RelWithDebInfo>:RTL_DEBUG_LEVEL=2>
+        $<$<CONFIG:RelWithDebInfo>:RTL_DEBUG_BUILD>
         $<$<CONFIG:MinSizeRel>:RTL_DEBUG_LEVEL=1>
         $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
 )
@@ -58,25 +59,25 @@ target_compile_definitions(rtlib PUBLIC
 if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     # Enable testing
     enable_testing()
-    
+
     # Include FetchContent for Unity
     include(FetchContent)
-    
+
     # Fetch and configure Unity
     FetchContent_Declare(
-        unity
-        GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
-        GIT_TAG v2.5.2
+            unity
+            GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
+            GIT_TAG v2.5.2
     )
     FetchContent_MakeAvailable(unity)
-    
+
     # Create test executable
     add_executable(rtlib_tests tests/rtlib_tests.c)
     target_link_libraries(rtlib_tests PRIVATE rtlib unity)
-    
+
     # Add the tests
     add_test(
-        NAME rtlib_tests
-        COMMAND rtlib_tests
+            NAME rtlib_tests
+            COMMAND rtlib_tests
     )
 endif ()
