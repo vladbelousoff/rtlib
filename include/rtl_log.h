@@ -100,40 +100,40 @@ static const char* rtl_get_time_stamp(void)
   } while (0)
 
 #if RTL_DEBUG_LEVEL >= 4
-#define rtl_log_i(_fmt, ...)                                                                       \
+#define rtl_log_inf(_fmt, ...)                                                                     \
   __log_printf("INF", RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
-#define rtl_log_i(_fmt, ...)                                                                       \
+#define rtl_log_inf(_fmt, ...)                                                                     \
   do {                                                                                             \
   } while (0)
 #endif
 
 #if RTL_DEBUG_LEVEL >= 3
-#define rtl_log_d(_fmt, ...)                                                                       \
+#define rtl_log_dbg(_fmt, ...)                                                                     \
   __log_printf_color(                                                                              \
     "DBG", RTL_COLOR_GREEN, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
-#define rtl_log_d(_fmt, ...)                                                                       \
+#define rtl_log_dbg(_fmt, ...)                                                                     \
   do {                                                                                             \
   } while (0)
 #endif
 
 #if RTL_DEBUG_LEVEL >= 2
-#define rtl_log_w(_fmt, ...)                                                                       \
+#define rtl_log_wrn(_fmt, ...)                                                                     \
   __log_printf_color(                                                                              \
     "WRN", RTL_COLOR_YELLOW, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
-#define rtl_log_w(_fmt, ...)                                                                       \
+#define rtl_log_wrn(_fmt, ...)                                                                     \
   do {                                                                                             \
   } while (0)
 #endif
 
 #if RTL_DEBUG_LEVEL >= 1
-#define rtl_log_e(_fmt, ...)                                                                       \
+#define rtl_log_err(_fmt, ...)                                                                     \
   __log_printf_color(                                                                              \
     "ERR", RTL_COLOR_RED, RTL_FILENAME, __LINE__, __FUNCTION__, _fmt, ##__VA_ARGS__)
 #else
-#define rtl_log_e(_fmt, ...)                                                                       \
+#define rtl_log_err(_fmt, ...)                                                                     \
   do {                                                                                             \
   } while (0)
 #endif
