@@ -49,7 +49,7 @@ static FILE* rtl_get_log_file(void)
     const time_t now = time(NULL);
     const struct tm* tm_info = localtime(&now);
     char filename[64];
-    strftime(filename, sizeof(filename), "logs_%d-%m-%Y_%H-%M-%S.txt", tm_info);
+    strftime(filename, sizeof(filename), "log_%Y-%m-%d_%H-%M-%S.txt", tm_info);
     log_file = fopen(filename, "w");
     initialized = 1;
   }
