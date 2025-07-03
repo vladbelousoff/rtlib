@@ -68,7 +68,7 @@ static const char* rtl_get_time_stamp(void)
 }
 
 // Common log format string
-#define RTL_LOG_FORMAT "[%-s|%-s] [%-16s:%4u] (%-16s) "
+#define RTL_LOG_FORMAT "[%-s|%-s] [%-16s:%4u] (%s) "
 
 // Unified fprintf-based logging macro for standard format
 #define __log_fprintf_std(stream, lvl, file, line, func, fmt, ...)                                 \
