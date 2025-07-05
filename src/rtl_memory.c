@@ -85,7 +85,7 @@ void rtl_memory_cleanup()
   rtl_list_for_each_safe(entry, safe, &rtl_memory_allocations)
   {
     rtl_memory_header_t* header = rtl_list_record(entry, rtl_memory_header_t, link);
-    rtl_log_err("Leaked memory, file: %s, line: %lu, size: %lu\n", header->source_location.file,
+    rtl_log_err("Leaked memory, file: %s, line: %lu, size: %lu", header->source_location.file,
       header->source_location.line, header->size);
     rtl_list_remove(&header->link);
     free(header);
