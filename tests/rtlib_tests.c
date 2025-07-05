@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "rtl.h"
+#include "rtl_list.h"
 #include "rtl_memory.h"
 
 #include "unity.h"
@@ -119,16 +120,282 @@ void test_memory_stress(void)
   }
 }
 
+// Test structure for list tests
+typedef struct test_node
+{
+  int value;
+  rtl_list_entry_t list_entry;
+} test_node_t;
+
+// Test list initialization
+void test_list_init(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  TEST_ASSERT_TRUE(rtl_list_empty(&head));
+  TEST_ASSERT_EQUAL_PTR(&head, head.next);
+  TEST_ASSERT_EQUAL_PTR(&head, head.prev);
+}
+
+// Test list first function with empty list
+void test_list_first_empty(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  rtl_list_entry_t* first = rtl_list_first(&head);
+  TEST_ASSERT_NULL(first);
+}
+
+// Test list first function with one element
+void test_list_first_single_element(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  rtl_list_entry_t* first = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(first);
+  TEST_ASSERT_EQUAL_PTR(&node.list_entry, first);
+
+  test_node_t* first_node = rtl_list_record(first, test_node_t, list_entry);
+  TEST_ASSERT_EQUAL(42, first_node->value);
+}
+
+// Test list first function with multiple elements
+void test_list_first_multiple_elements(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_head(&head, &node1.list_entry);
+  rtl_list_add_head(&head, &node2.list_entry);
+  rtl_list_add_head(&head, &node3.list_entry);
+
+  rtl_list_entry_t* first = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(first);
+  TEST_ASSERT_EQUAL_PTR(&node3.list_entry, first);
+
+  test_node_t* first_node = rtl_list_record(first, test_node_t, list_entry);
+  TEST_ASSERT_EQUAL(3, first_node->value);
+}
+
+// Test list next function with NULL current
+void test_list_next_null_current(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  rtl_list_entry_t* next = rtl_list_next(NULL, &head);
+  TEST_ASSERT_NULL(next);
+}
+
+// Test list next function with single element
+void test_list_next_single_element(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  rtl_list_entry_t* next = rtl_list_next(&node.list_entry, &head);
+  TEST_ASSERT_NULL(next);
+}
+
+// Test list next function with multiple elements
+void test_list_next_multiple_elements(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_tail(&head, &node1.list_entry);
+  rtl_list_add_tail(&head, &node2.list_entry);
+  rtl_list_add_tail(&head, &node3.list_entry);
+
+  rtl_list_entry_t* first = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(first);
+
+  rtl_list_entry_t* second = rtl_list_next(first, &head);
+  TEST_ASSERT_NOT_NULL(second);
+  TEST_ASSERT_EQUAL_PTR(&node2.list_entry, second);
+
+  rtl_list_entry_t* third = rtl_list_next(second, &head);
+  TEST_ASSERT_NOT_NULL(third);
+  TEST_ASSERT_EQUAL_PTR(&node3.list_entry, third);
+
+  rtl_list_entry_t* fourth = rtl_list_next(third, &head);
+  TEST_ASSERT_NULL(fourth);
+}
+
+// Test iterating through list using first and next
+void test_list_iteration_with_first_and_next(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[5];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add nodes with values 0, 1, 2, 3, 4
+  for (i = 0; i < 5; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  // Iterate through the list using first and next
+  rtl_list_entry_t* current = rtl_list_first(&head);
+  i = 0;
+  while (current != NULL) {
+    test_node_t* node = rtl_list_record(current, test_node_t, list_entry);
+    TEST_ASSERT_EQUAL(i, node->value);
+    current = rtl_list_next(current, &head);
+    i++;
+  }
+
+  TEST_ASSERT_EQUAL(5, i);
+}
+
+// Test list operations with add_head
+void test_list_add_head(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_head(&head, &node1.list_entry);
+  rtl_list_add_head(&head, &node2.list_entry);
+  rtl_list_add_head(&head, &node3.list_entry);
+
+  // Check order: should be 3, 2, 1
+
+  rtl_list_entry_t* current = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(3, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(2, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(1, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NULL(current);
+}
+
+// Test list operations with add_tail
+void test_list_add_tail(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_tail(&head, &node1.list_entry);
+  rtl_list_add_tail(&head, &node2.list_entry);
+  rtl_list_add_tail(&head, &node3.list_entry);
+
+  // Check order: should be 1, 2, 3
+  rtl_list_entry_t* current = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(1, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(2, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(3, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NULL(current);
+}
+
+// Test list remove functionality with first and next
+void test_list_remove_with_iteration(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_tail(&head, &node1.list_entry);
+  rtl_list_add_tail(&head, &node2.list_entry);
+  rtl_list_add_tail(&head, &node3.list_entry);
+
+  // Remove middle element
+  rtl_list_remove(&node2.list_entry);
+
+  // Check that list now contains only 1, 3
+  rtl_list_entry_t* current = rtl_list_first(&head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(1, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NOT_NULL(current);
+  TEST_ASSERT_EQUAL(3, rtl_list_record(current, test_node_t, list_entry)->value);
+
+  current = rtl_list_next(current, &head);
+  TEST_ASSERT_NULL(current);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
 
+  // Memory tests
   RUN_TEST(test_memory_allocation);
   RUN_TEST(test_zero_allocation);
   RUN_TEST(test_multiple_allocations);
   RUN_TEST(test_different_sizes);
   RUN_TEST(test_reallocation_after_free);
   RUN_TEST(test_memory_stress);
+
+  // List tests
+  RUN_TEST(test_list_init);
+  RUN_TEST(test_list_first_empty);
+  RUN_TEST(test_list_first_single_element);
+  RUN_TEST(test_list_first_multiple_elements);
+  RUN_TEST(test_list_next_null_current);
+  RUN_TEST(test_list_next_single_element);
+  RUN_TEST(test_list_next_multiple_elements);
+  RUN_TEST(test_list_iteration_with_first_and_next);
+  RUN_TEST(test_list_add_head);
+  RUN_TEST(test_list_add_tail);
+  RUN_TEST(test_list_remove_with_iteration);
 
   return UNITY_END();
 }

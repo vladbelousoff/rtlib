@@ -21,6 +21,7 @@
 // SOFTWARE.
 
 #include "rtl_list.h"
+#include <stddef.h>
 
 void rtl_list_init(rtl_list_entry_t* head)
 {
@@ -82,4 +83,22 @@ static void __rtl_list_remove(rtl_list_entry_t* prev, rtl_list_entry_t* next)
 void rtl_list_remove(const rtl_list_entry_t* entry)
 {
   __rtl_list_remove(entry->prev, entry->next);
+}
+
+rtl_list_entry_t* rtl_list_first(const rtl_list_entry_t* head)
+{
+  if (rtl_list_empty(head)) {
+    return NULL;
+  }
+
+  return head->next;
+}
+
+rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_entry_t* head)
+{
+  if (current == NULL || current->next == head) {
+    return NULL;
+  }
+
+  return current->next;
 }

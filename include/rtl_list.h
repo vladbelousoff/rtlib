@@ -97,3 +97,18 @@ void rtl_list_add_tail(rtl_list_entry_t* head, rtl_list_entry_t* entry);
  *        Note: entry is not freed, only removed from the list.
  */
 void rtl_list_remove(const rtl_list_entry_t* entry);
+
+/**
+ * @brief Gets the first entry in the list.
+ * @param head Pointer to the list head entry.
+ * @return Pointer to the first entry, or NULL if the list is empty.
+ */
+rtl_list_entry_t* rtl_list_first(const rtl_list_entry_t* head);
+
+/**
+ * @brief Gets the next entry in the list.
+ * @param current Pointer to the current entry.
+ * @param head Pointer to the list head entry.
+ * @return Pointer to the next entry, or NULL if current is the last entry.
+ */
+rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_entry_t* head);
