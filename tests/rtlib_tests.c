@@ -20,8 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <string.h>
+
 #include "rtl.h"
 #include "rtl_list.h"
+#include "rtl_log.h"
 #include "rtl_memory.h"
 
 #include "unity.h"
@@ -375,6 +378,11 @@ void test_list_remove_with_iteration(void)
 int main(void)
 {
   UNITY_BEGIN();
+
+  rtl_log_inf("Info");
+  rtl_log_dbg("Debug");
+  rtl_log_wrn("Warning");
+  rtl_log_err("Error");
 
   // Memory tests
   RUN_TEST(test_memory_allocation);

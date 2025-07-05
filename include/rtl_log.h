@@ -72,11 +72,12 @@ static const char* rtl_get_time_stamp(void)
 
 // Unified fprintf-based logging macro for standard format
 #define __log_fprintf_std(stream, lvl, file, line, func, fmt, ...)                                 \
-  fprintf(stream, RTL_LOG_FORMAT fmt, lvl, rtl_get_time_stamp(), file, line, func, ##__VA_ARGS__)
+  fprintf(                                                                                         \
+    stream, RTL_LOG_FORMAT fmt "\n", lvl, rtl_get_time_stamp(), file, line, func, ##__VA_ARGS__)
 
 // Unified fprintf-based logging macro for colored format
 #define __log_fprintf_color(stream, color, lvl, file, line, func, fmt, ...)                        \
-  fprintf(stream, "%s" RTL_LOG_FORMAT "%s" fmt, color, lvl, rtl_get_time_stamp(), file, line,      \
+  fprintf(stream, "%s" RTL_LOG_FORMAT "%s" fmt "\n", color, lvl, rtl_get_time_stamp(), file, line, \
     func, RTL_COLOR_RESET, ##__VA_ARGS__)
 
 #define __log_printf(lvl, file, line, func, fmt, ...)                                              \
