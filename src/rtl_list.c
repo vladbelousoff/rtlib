@@ -43,7 +43,7 @@ bool rtl_list_empty(const rtl_list_entry_t* head)
  * @param prev Pointer to the entry that will precede the new entry.
  * @param next Pointer to the entry that will follow the new entry.
  */
-static void __rtl_list_insert(
+static void _rtl_list_insert(
   rtl_list_entry_t* _new, rtl_list_entry_t* prev, rtl_list_entry_t* next)
 {
   next->prev = _new;
@@ -59,12 +59,12 @@ static void __rtl_list_insert(
  */
 void rtl_list_add_head(rtl_list_entry_t* head, rtl_list_entry_t* entry)
 {
-  __rtl_list_insert(entry, head, head->next);
+  _rtl_list_insert(entry, head, head->next);
 }
 
 void rtl_list_add_tail(rtl_list_entry_t* head, rtl_list_entry_t* entry)
 {
-  __rtl_list_insert(entry, head->prev, head);
+  _rtl_list_insert(entry, head->prev, head);
 }
 
 /**
@@ -74,7 +74,7 @@ void rtl_list_add_tail(rtl_list_entry_t* head, rtl_list_entry_t* entry)
  * @param prev Pointer to the previous entry.
  * @param next Pointer to the next entry.
  */
-static void __rtl_list_remove(rtl_list_entry_t* prev, rtl_list_entry_t* next)
+static void _rtl_list_remove(rtl_list_entry_t* prev, rtl_list_entry_t* next)
 {
   next->prev = prev;
   prev->next = next;
@@ -82,7 +82,7 @@ static void __rtl_list_remove(rtl_list_entry_t* prev, rtl_list_entry_t* next)
 
 void rtl_list_remove(const rtl_list_entry_t* entry)
 {
-  __rtl_list_remove(entry->prev, entry->next);
+  _rtl_list_remove(entry->prev, entry->next);
 }
 
 rtl_list_entry_t* rtl_list_first(const rtl_list_entry_t* head)

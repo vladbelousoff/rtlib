@@ -36,7 +36,7 @@
 static rtl_list_entry_t rtl_memory_allocations;
 #endif
 
-void* __rtl_malloc(const char* file, unsigned long line, unsigned long size)
+void* _rtl_malloc(const char* file, unsigned long line, unsigned long size)
 {
 #ifdef RTL_DEBUG_BUILD
   // It's not a memory leak, it's just a trick to add a bit more

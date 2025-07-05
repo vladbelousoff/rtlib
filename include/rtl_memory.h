@@ -26,14 +26,7 @@
 #include "rtl_list.h"
 #endif
 
-#define RTL_NARGS(...)                 RTL_NARGS_(__VA_ARGS__, 3, 2, 1, 0)
-#define RTL_NARGS_(a, b, c, N, ...)    N
-#define RTL_CONCAT(a, b)               RTL_CONCAT_(a, b)
-#define RTL_CONCAT_(a, b)              a##b
-
-#define rtl_malloc(...)                RTL_CONCAT(rtl_malloc_, RTL_NARGS(__VA_ARGS__))(__VA_ARGS__)
-#define rtl_malloc_1(size)             __rtl_malloc(__FILE__, __LINE__, size)
-#define rtl_malloc_3(file, line, size) __rtl_malloc(file, line, size)
+#define rtl_malloc(size) _rtl_malloc(__FILE__, __LINE__, size)
 
 /**
  * @brief Structure to store source code location information.
@@ -65,7 +58,7 @@ typedef struct rtl_memory_header_t
  * @return A pointer to the allocated memory, or NULL on failure.
  * @note Users should typically use the rtl_malloc() macro instead.
  */
-void* __rtl_malloc(const char* file, unsigned long line, unsigned long size);
+void* _rtl_malloc(const char* file, unsigned long line, unsigned long size);
 
 /**
  * @brief Frees memory previously allocated by rtl_malloc().
