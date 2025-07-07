@@ -23,15 +23,31 @@
 #pragma once
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
+static const char* rtl_filename(const char* filename)
+{
 #ifdef _WIN32
-#define RTL_SEPARATOR '\\'
+  const char* p = strrchr(filename, '\\');
 #else
-#define RTL_SEPARATOR '/'
+  const char* p = strrchr(filename, '/');
+#endif
+  if (p) {
+    return p + 1;
+  }
+
+#ifdef _WIN32
+  p = strrchr(filename, '/');
+  if (p) {
+    return p + 1;
+  }
 #endif
 
-#define RTL_FILENAME ((char*)(strrchr(__FILE__, RTL_SEPARATOR) + 1))
+  return filename;
+}
+
+#define RTL_FILENAME rtl_filename(__FILE__)
 
 // ANSI color codes
 #define RTL_COLOR_RESET  "\033[0m"
