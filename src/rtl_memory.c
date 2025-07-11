@@ -57,6 +57,21 @@ void* _rtl_malloc(const char* file, unsigned long line, unsigned long size)
 #endif
 }
 
+char* _rtl_strdup(const char* file, unsigned long line, const char* str)
+{
+  if (str == NULL) {
+    return NULL;
+  }
+
+  const size_t len = strlen(str) + 1;  // +1 for null terminator
+  char* copy = _rtl_malloc(file, line, len);
+  if (copy != NULL) {
+    strcpy(copy, str);
+  }
+
+  return copy;
+}
+
 void rtl_free(void* data)
 {
 #ifdef RTL_DEBUG_BUILD

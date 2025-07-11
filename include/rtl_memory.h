@@ -27,6 +27,7 @@
 #endif
 
 #define rtl_malloc(size) _rtl_malloc(__FILE__, __LINE__, size)
+#define rtl_strdup(str) _rtl_strdup(__FILE__, __LINE__, str)
 
 /**
  * @brief Structure to store source code location information.
@@ -59,6 +60,16 @@ typedef struct rtl_memory_header_t
  * @note Users should typically use the rtl_malloc() macro instead.
  */
 void* _rtl_malloc(const char* file, unsigned long line, unsigned long size);
+
+/**
+ * @brief Internal string duplication function.
+ * @param file Source file name where the duplication was requested.
+ * @param line Source line number where the duplication was requested.
+ * @param str The string to duplicate.
+ * @return A pointer to the newly allocated string copy, or NULL on failure.
+ * @note Users should typically use the rtl_strdup() macro instead.
+ */
+char* _rtl_strdup(const char* file, unsigned long line, const char* str);
 
 /**
  * @brief Frees memory previously allocated by rtl_malloc().
