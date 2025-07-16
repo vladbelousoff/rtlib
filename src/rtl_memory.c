@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef RTL_DEBUG_BUILD
 #include "rtl_log.h"
+#endif
 
 #ifdef RTL_DEBUG_BUILD
 /**
