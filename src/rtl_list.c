@@ -102,3 +102,15 @@ rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_
 
   return current->next;
 }
+
+unsigned long rtl_list_length(const rtl_list_entry_t* head)
+{
+  unsigned long length = 0;
+  
+  rtl_list_entry_t* current;
+  rtl_list_for_each(current, head) {
+    length++;
+  }
+  
+  return length;
+}

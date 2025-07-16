@@ -375,6 +375,128 @@ void test_list_remove_with_iteration(void)
   TEST_ASSERT_NULL(current);
 }
 
+// Test list length with empty list
+void test_list_length_empty(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  unsigned long length = rtl_list_length(&head);
+  TEST_ASSERT_EQUAL(0, length);
+}
+
+// Test list length with single element
+void test_list_length_single_element(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  unsigned long length = rtl_list_length(&head);
+  TEST_ASSERT_EQUAL(1, length);
+}
+
+// Test list length with multiple elements added with add_head
+void test_list_length_multiple_elements_head(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_head(&head, &node1.list_entry);
+  TEST_ASSERT_EQUAL(1, rtl_list_length(&head));
+
+  rtl_list_add_head(&head, &node2.list_entry);
+  TEST_ASSERT_EQUAL(2, rtl_list_length(&head));
+
+  rtl_list_add_head(&head, &node3.list_entry);
+  TEST_ASSERT_EQUAL(3, rtl_list_length(&head));
+}
+
+// Test list length with multiple elements added with add_tail
+void test_list_length_multiple_elements_tail(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_tail(&head, &node1.list_entry);
+  TEST_ASSERT_EQUAL(1, rtl_list_length(&head));
+
+  rtl_list_add_tail(&head, &node2.list_entry);
+  TEST_ASSERT_EQUAL(2, rtl_list_length(&head));
+
+  rtl_list_add_tail(&head, &node3.list_entry);
+  TEST_ASSERT_EQUAL(3, rtl_list_length(&head));
+}
+
+// Test list length after removing elements
+void test_list_length_after_remove(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_tail(&head, &node1.list_entry);
+  rtl_list_add_tail(&head, &node2.list_entry);
+  rtl_list_add_tail(&head, &node3.list_entry);
+
+  TEST_ASSERT_EQUAL(3, rtl_list_length(&head));
+
+  // Remove middle element
+  rtl_list_remove(&node2.list_entry);
+  TEST_ASSERT_EQUAL(2, rtl_list_length(&head));
+
+  // Remove first element
+  rtl_list_remove(&node1.list_entry);
+  TEST_ASSERT_EQUAL(1, rtl_list_length(&head));
+
+  // Remove last element
+  rtl_list_remove(&node3.list_entry);
+  TEST_ASSERT_EQUAL(0, rtl_list_length(&head));
+}
+
+// Test list length with larger number of elements
+void test_list_length_stress(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[50];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add 50 elements
+  for (i = 0; i < 50; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+    TEST_ASSERT_EQUAL(i + 1, rtl_list_length(&head));
+  }
+
+  // Remove elements one by one
+  for (i = 0; i < 50; i++) {
+    rtl_list_remove(&nodes[i].list_entry);
+    TEST_ASSERT_EQUAL(50 - i - 1, rtl_list_length(&head));
+  }
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -404,6 +526,12 @@ int main(void)
   RUN_TEST(test_list_add_head);
   RUN_TEST(test_list_add_tail);
   RUN_TEST(test_list_remove_with_iteration);
+  RUN_TEST(test_list_length_empty);
+  RUN_TEST(test_list_length_single_element);
+  RUN_TEST(test_list_length_multiple_elements_head);
+  RUN_TEST(test_list_length_multiple_elements_tail);
+  RUN_TEST(test_list_length_after_remove);
+  RUN_TEST(test_list_length_stress);
 
   return UNITY_END();
 }

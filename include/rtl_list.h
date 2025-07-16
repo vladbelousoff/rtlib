@@ -112,3 +112,10 @@ rtl_list_entry_t* rtl_list_first(const rtl_list_entry_t* head);
  * @return Pointer to the next entry, or NULL if current is the last entry.
  */
 rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_entry_t* head);
+
+/**
+ * @brief Gets the length (number of entries) in the list.
+ * @param head Pointer to the list head entry.
+ * @return The number of entries in the list (excluding the head).
+ */
+unsigned long rtl_list_length(const rtl_list_entry_t* head);
