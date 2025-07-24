@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "rtl.h"
+#include "rtl_hash.h"
 #include "rtl_list.h"
 #include "rtl_log.h"
 #include "rtl_memory.h"
@@ -507,6 +508,366 @@ void test_rtl_assert_success(void)
   TEST_ASSERT_TRUE(1);
 }
 
+// Hash table tests
+
+// Test hash table initialization and cleanup
+void test_hash_table_init_cleanup(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 10, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(0, rtl_hash_table_size(&table));
+  TEST_ASSERT_TRUE(rtl_hash_table_empty(&table));
+  TEST_ASSERT_EQUAL(0.0, rtl_hash_table_load_factor(&table));
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table insertion
+void test_hash_table_insert(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  int key = 42;
+  int value = 123;
+
+  result = rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(1, rtl_hash_table_size(&table));
+  TEST_ASSERT_FALSE(rtl_hash_table_empty(&table));
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table find
+void test_hash_table_find(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  int key = 42;
+  int value = 123;
+
+  // Insert a value
+  result = rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+  TEST_ASSERT_TRUE(result);
+
+  // Find the value
+  unsigned long found_value_size;
+  int* found_value = (int*)rtl_hash_table_find(&table, &key, sizeof(key), &found_value_size);
+  TEST_ASSERT_NOT_NULL(found_value);
+  TEST_ASSERT_EQUAL(sizeof(int), found_value_size);
+  TEST_ASSERT_EQUAL(123, *found_value);
+
+  // Try to find non-existent key
+  int nonexistent_key = 99;
+  void* not_found = rtl_hash_table_find(&table, &nonexistent_key, sizeof(nonexistent_key), NULL);
+  TEST_ASSERT_NULL(not_found);
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table update (insert existing key)
+void test_hash_table_update(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  const int key = 42;
+  const int value1 = 123;
+  const int value2 = 456;
+
+  // Insert initial value
+  result = rtl_hash_table_insert(&table, &key, sizeof(key), &value1, sizeof(value1));
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(1, rtl_hash_table_size(&table));
+
+  // Update with new value
+  result = rtl_hash_table_insert(&table, &key, sizeof(key), &value2, sizeof(value2));
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(1, rtl_hash_table_size(&table));  // Size should not change
+
+  // Verify the new value
+  const int* found_value = rtl_hash_table_find(&table, &key, sizeof(key), NULL);
+  TEST_ASSERT_NOT_NULL(found_value);
+  TEST_ASSERT_EQUAL(456, *found_value);
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table remove
+void test_hash_table_remove(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  int key = 42;
+  int value = 123;
+
+  // Insert a value
+  result = rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(1, rtl_hash_table_size(&table));
+
+  // Remove the value
+  result = rtl_hash_table_remove(&table, &key, sizeof(key));
+  TEST_ASSERT_TRUE(result);
+  TEST_ASSERT_EQUAL(0, rtl_hash_table_size(&table));
+  TEST_ASSERT_TRUE(rtl_hash_table_empty(&table));
+
+  // Verify it's gone
+  void* found_value = rtl_hash_table_find(&table, &key, sizeof(key), NULL);
+  TEST_ASSERT_NULL(found_value);
+
+  // Try to remove non-existent key
+  result = rtl_hash_table_remove(&table, &key, sizeof(key));
+  TEST_ASSERT_FALSE(result);
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table with multiple entries
+void test_hash_table_multiple_entries(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 3, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  // Insert multiple key-value pairs
+  for (int i = 0; i < 10; i++) {
+    int key = i;
+    int value = i * 10;
+    result = rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+    TEST_ASSERT_TRUE(result);
+  }
+
+  TEST_ASSERT_EQUAL(10, rtl_hash_table_size(&table));
+  TEST_ASSERT_FALSE(rtl_hash_table_empty(&table));
+
+  // Verify all values can be found
+  for (int i = 0; i < 10; i++) {
+    int key = i;
+    int* found_value = (int*)rtl_hash_table_find(&table, &key, sizeof(key), NULL);
+    TEST_ASSERT_NOT_NULL(found_value);
+    TEST_ASSERT_EQUAL(i * 10, *found_value);
+  }
+
+  // Remove every other entry
+  for (int i = 0; i < 10; i += 2) {
+    int key = i;
+    result = rtl_hash_table_remove(&table, &key, sizeof(key));
+    TEST_ASSERT_TRUE(result);
+  }
+
+  TEST_ASSERT_EQUAL(5, rtl_hash_table_size(&table));
+
+  // Verify remaining entries
+  for (int i = 0; i < 10; i++) {
+    int key = i;
+    int* found_value = (int*)rtl_hash_table_find(&table, &key, sizeof(key), NULL);
+    if (i % 2 == 0) {
+      TEST_ASSERT_NULL(found_value);  // Should be removed
+    } else {
+      TEST_ASSERT_NOT_NULL(found_value);  // Should still exist
+      TEST_ASSERT_EQUAL(i * 10, *found_value);
+    }
+  }
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table with string keys
+void test_hash_table_string_keys(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_string);
+  TEST_ASSERT_TRUE(result);
+
+  const char* key1 = "hello";
+  const char* key2 = "world";
+  const char* key3 = "test";
+  int value1 = 100;
+  int value2 = 200;
+  int value3 = 300;
+
+  // Insert string keys
+  result = rtl_hash_table_insert(&table, key1, strlen(key1) + 1, &value1, sizeof(value1));
+  TEST_ASSERT_TRUE(result);
+
+  result = rtl_hash_table_insert(&table, key2, strlen(key2) + 1, &value2, sizeof(value2));
+  TEST_ASSERT_TRUE(result);
+
+  result = rtl_hash_table_insert(&table, key3, strlen(key3) + 1, &value3, sizeof(value3));
+  TEST_ASSERT_TRUE(result);
+
+  TEST_ASSERT_EQUAL(3, rtl_hash_table_size(&table));
+
+  // Find values by string keys
+  const int* found_value = (int*)rtl_hash_table_find(&table, key1, strlen(key1) + 1, NULL);
+  TEST_ASSERT_NOT_NULL(found_value);
+  TEST_ASSERT_EQUAL(100, *found_value);
+
+  found_value = (int*)rtl_hash_table_find(&table, key2, strlen(key2) + 1, NULL);
+  TEST_ASSERT_NOT_NULL(found_value);
+  TEST_ASSERT_EQUAL(200, *found_value);
+
+  found_value = (int*)rtl_hash_table_find(&table, key3, strlen(key3) + 1, NULL);
+  TEST_ASSERT_NOT_NULL(found_value);
+  TEST_ASSERT_EQUAL(300, *found_value);
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table collision handling
+void test_hash_table_collisions(void)
+{
+  // Use a small table to force collisions
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 2, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  // Insert many entries to ensure collisions
+  for (int i = 0; i < 20; i++) {
+    int key = i;
+    int value = i * 100;
+    result = rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+    TEST_ASSERT_TRUE(result);
+  }
+
+  TEST_ASSERT_EQUAL(20, rtl_hash_table_size(&table));
+
+  // Verify all entries can still be found
+  for (int i = 0; i < 20; i++) {
+    int key = i;
+    int* found_value = (int*)rtl_hash_table_find(&table, &key, sizeof(key), NULL);
+    TEST_ASSERT_NOT_NULL(found_value);
+    TEST_ASSERT_EQUAL(i * 100, *found_value);
+  }
+
+  // Check load factor
+  double load_factor = rtl_hash_table_load_factor(&table);
+  TEST_ASSERT_EQUAL(10.0, load_factor);  // 20 entries / 2 buckets = 10.0
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table load factor
+void test_hash_table_load_factor(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 4, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  TEST_ASSERT_EQUAL(0.0, rtl_hash_table_load_factor(&table));
+
+  // Add 2 entries
+  for (int i = 0; i < 2; i++) {
+    int key = i;
+    int value = i;
+    rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+  }
+
+  TEST_ASSERT_EQUAL(0.5, rtl_hash_table_load_factor(&table));  // 2/4 = 0.5
+
+  // Add 2 more entries
+  for (int i = 2; i < 4; i++) {
+    int key = i;
+    int value = i;
+    rtl_hash_table_insert(&table, &key, sizeof(key), &value, sizeof(value));
+  }
+
+  TEST_ASSERT_EQUAL(1.0, rtl_hash_table_load_factor(&table));  // 4/4 = 1.0
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test hash table with different value sizes
+void test_hash_table_different_value_sizes(void)
+{
+  rtl_hash_table_t table;
+  bool result = rtl_hash_table_init(&table, 5, rtl_hash_fnv1a, rtl_hash_key_compare_bytes);
+  TEST_ASSERT_TRUE(result);
+
+  // Test with different sized values
+  int key1 = 1;
+  char value1 = 'A';
+  result = rtl_hash_table_insert(&table, &key1, sizeof(key1), &value1, sizeof(value1));
+  TEST_ASSERT_TRUE(result);
+
+  int key2 = 2;
+  int value2 = 12345;
+  result = rtl_hash_table_insert(&table, &key2, sizeof(key2), &value2, sizeof(value2));
+  TEST_ASSERT_TRUE(result);
+
+  int key3 = 3;
+  long value3 = 987654321L;  // Using long instead of double to avoid precision issues
+  result = rtl_hash_table_insert(&table, &key3, sizeof(key3), &value3, sizeof(value3));
+  TEST_ASSERT_TRUE(result);
+
+  // Verify different sized values
+  unsigned long found_size;
+  char* found_char = (char*)rtl_hash_table_find(&table, &key1, sizeof(key1), &found_size);
+  TEST_ASSERT_NOT_NULL(found_char);
+  TEST_ASSERT_EQUAL(sizeof(char), found_size);
+  TEST_ASSERT_EQUAL('A', *found_char);
+
+  int* found_int = (int*)rtl_hash_table_find(&table, &key2, sizeof(key2), &found_size);
+  TEST_ASSERT_NOT_NULL(found_int);
+  TEST_ASSERT_EQUAL(sizeof(int), found_size);
+  TEST_ASSERT_EQUAL(12345, *found_int);
+
+  long* found_long = (long*)rtl_hash_table_find(&table, &key3, sizeof(key3), &found_size);
+  TEST_ASSERT_NOT_NULL(found_long);
+  TEST_ASSERT_EQUAL(sizeof(long), found_size);
+  TEST_ASSERT_EQUAL(987654321L, *found_long);
+
+  rtl_hash_table_cleanup(&table);
+}
+
+// Test FNV-1a hash function
+void test_hash_fnv1a_function(void)
+{
+  const char* test_string = "hello";
+  unsigned long hash1 = rtl_hash_fnv1a(test_string, strlen(test_string));
+  unsigned long hash2 = rtl_hash_fnv1a(test_string, strlen(test_string));
+
+  // Same input should produce same hash
+  TEST_ASSERT_EQUAL(hash1, hash2);
+
+  const char* different_string = "world";
+  unsigned long hash3 = rtl_hash_fnv1a(different_string, strlen(different_string));
+
+  // Different input should produce different hash (very likely)
+  TEST_ASSERT_NOT_EQUAL(hash1, hash3);
+}
+
+// Test key comparison functions
+void test_hash_key_compare_functions(void)
+{
+  // Test byte comparison
+  const char* data1 = "test";
+  const char* data2 = "test";
+  const char* data3 = "different";
+
+  int result = rtl_hash_key_compare_bytes(data1, 4, data2, 4);
+  TEST_ASSERT_EQUAL(0, result);
+
+  result = rtl_hash_key_compare_bytes(data1, 4, data3, 9);
+  TEST_ASSERT_NOT_EQUAL(0, result);
+
+  // Test string comparison
+  result = rtl_hash_key_compare_string(data1, 0, data2, 0);
+  TEST_ASSERT_EQUAL(0, result);
+
+  result = rtl_hash_key_compare_string(data1, 0, data3, 0);
+  TEST_ASSERT_NOT_EQUAL(0, result);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -540,6 +901,20 @@ int main(void)
   RUN_TEST(test_list_length_multiple_elements_tail);
   RUN_TEST(test_list_length_after_remove);
   RUN_TEST(test_list_length_stress);
+
+  // Hash table tests
+  RUN_TEST(test_hash_table_init_cleanup);
+  RUN_TEST(test_hash_table_insert);
+  RUN_TEST(test_hash_table_find);
+  RUN_TEST(test_hash_table_update);
+  RUN_TEST(test_hash_table_remove);
+  RUN_TEST(test_hash_table_multiple_entries);
+  RUN_TEST(test_hash_table_string_keys);
+  RUN_TEST(test_hash_table_collisions);
+  RUN_TEST(test_hash_table_load_factor);
+  RUN_TEST(test_hash_table_different_value_sizes);
+  RUN_TEST(test_hash_fnv1a_function);
+  RUN_TEST(test_hash_key_compare_functions);
 
   return UNITY_END();
 }

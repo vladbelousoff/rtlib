@@ -43,8 +43,7 @@ bool rtl_list_empty(const rtl_list_entry_t* head)
  * @param prev Pointer to the entry that will precede the new entry.
  * @param next Pointer to the entry that will follow the new entry.
  */
-static void _rtl_list_insert(
-  rtl_list_entry_t* _new, rtl_list_entry_t* prev, rtl_list_entry_t* next)
+static void _rtl_list_insert(rtl_list_entry_t* _new, rtl_list_entry_t* prev, rtl_list_entry_t* next)
 {
   next->prev = _new;
   _new->next = next;
@@ -106,11 +105,12 @@ rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_
 unsigned long rtl_list_length(const rtl_list_entry_t* head)
 {
   unsigned long length = 0;
-  
+
   rtl_list_entry_t* current;
-  rtl_list_for_each(current, head) {
+  rtl_list_for_each(current, head)
+  {
     length++;
   }
-  
+
   return length;
 }

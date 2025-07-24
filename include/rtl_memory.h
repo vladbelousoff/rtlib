@@ -27,7 +27,7 @@
 #endif
 
 #define rtl_malloc(size) _rtl_malloc(__FILE__, __LINE__, size)
-#define rtl_strdup(str) _rtl_strdup(__FILE__, __LINE__, str)
+#define rtl_strdup(str)  _rtl_strdup(__FILE__, __LINE__, str)
 
 /**
  * @brief Structure to store source code location information.
