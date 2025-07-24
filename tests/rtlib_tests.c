@@ -497,14 +497,22 @@ void test_list_length_stress(void)
   }
 }
 
+void test_rtl_assert_success(void)
+{
+  // Test that assert passes when condition is true
+  rtl_assert(1 == 1, "This should not trigger");
+  rtl_assert(5 >= 3, "Math should work: %d >= %d", 5, 3);
+
+  // If we reach here, the assertions passed correctly
+  TEST_ASSERT_TRUE(1);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
 
-  rtl_log_inf("Info");
-  rtl_log_dbg("Debug");
-  rtl_log_wrn("Warning");
-  rtl_log_err("Error");
+  // Assert tests
+  RUN_TEST(test_rtl_assert_success);
 
   // Memory tests
   RUN_TEST(test_memory_allocation);

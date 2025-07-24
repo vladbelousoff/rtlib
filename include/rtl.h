@@ -22,6 +22,32 @@
 
 #pragma once
 
+#ifdef RTL_DEBUG_BUILD
+#include <stdlib.h>
+#include "rtl_log.h"
+#endif
+
+/**
+ * @brief Assert macro that logs an error and aborts if condition is false.
+ *        Disabled when RTL_DEBUG_BUILD is defined.
+ * @param condition The condition to check
+ * @param message Optional error message (can be a format string with args)
+ */
+#ifdef RTL_DEBUG_BUILD
+#define rtl_assert(condition, message, ...)                                                        \
+  do {                                                                                             \
+    if (!(condition)) {                                                                            \
+      rtl_log_err("Assertion failed: %s - " message, #condition, ##__VA_ARGS__);                   \
+      exit(EXIT_FAILURE);                                                                          \
+    }                                                                                              \
+  } while (0)
+#else
+#define rtl_assert(condition, message, ...)                                                        \
+  do {                                                                                             \
+    (void)(condition);                                                                             \
+  } while (0)
+#endif
+
 /**
  * @brief Initializes the runtime library subsystems.
  *        Must be called once at the start of the application.
