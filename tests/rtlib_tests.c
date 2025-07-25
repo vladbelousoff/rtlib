@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "rtl.h"
@@ -698,12 +699,12 @@ static bool test_callback_validator(unsigned long index, rtl_list_entry_t* entry
 {
   test_node_t* node = rtl_list_record(entry, test_node_t, list_entry);
   int* expected_value = (int*)user_data;
-  
+
   // Verify that index matches the expected value
   if (index != (unsigned long)node->value || index != (unsigned long)(*expected_value)) {
     return false;  // Stop on mismatch
   }
-  
+
   (*expected_value)++;
   return true;  // Continue iteration
 }
@@ -732,7 +733,7 @@ void test_list_for_each_callback_empty(void)
 
   int counter = 0;
   rtl_list_for_each_callback(&head, test_callback_counter, &counter);
-  
+
   TEST_ASSERT_EQUAL(0, counter);
 }
 
@@ -748,7 +749,7 @@ void test_list_for_each_callback_null_callback(void)
 
   // Should handle NULL callback gracefully (no crash)
   rtl_list_for_each_callback(&head, NULL, NULL);
-  
+
   // If we get here, it handled NULL gracefully
   TEST_ASSERT_TRUE(1);
 }
@@ -765,7 +766,7 @@ void test_list_for_each_callback_single_element(void)
 
   int counter = 0;
   rtl_list_for_each_callback(&head, test_callback_counter, &counter);
-  
+
   TEST_ASSERT_EQUAL(1, counter);
 }
 
@@ -786,7 +787,7 @@ void test_list_for_each_callback_multiple_elements(void)
 
   int expected_value = 0;
   rtl_list_for_each_callback(&head, test_callback_validator, &expected_value);
-  
+
   // Should have processed all 5 elements
   TEST_ASSERT_EQUAL(5, expected_value);
 }
@@ -810,16 +811,19 @@ void test_list_for_each_callback_early_stop(void)
   unsigned long stop_at = 3;
   int counter = 0;
   rtl_list_for_each_callback(&head, test_callback_counter, &counter);
-  
+
   // Reset counter and test early stop
   counter = 0;
   rtl_list_for_each_callback(&head, test_callback_early_stop, &stop_at);
-  
+
   // Should have processed only indices 0, 1, 2 (stopped before 3)
   int validation_counter = 0;
   rtl_list_entry_t* current;
-  rtl_list_for_each(current, &head) {
-    if (validation_counter >= 3) break;
+  rtl_list_for_each(current, &head)
+  {
+    if (validation_counter >= 3) {
+      break;
+    }
     validation_counter++;
   }
   TEST_ASSERT_EQUAL(3, validation_counter);
@@ -837,17 +841,17 @@ void test_list_for_each_callback_user_data(void)
   nodes[0].value = 10;
   nodes[1].value = 20;
   nodes[2].value = 30;
-  
+
   for (i = 0; i < 3; i++) {
     rtl_list_add_tail(&head, &nodes[i].list_entry);
   }
 
   // Test with integer user data
   int sum = 0;
-  
+
   // Use a callback that sums the node values
   rtl_list_for_each_callback(&head, test_callback_sum, &sum);
-  
+
   TEST_ASSERT_EQUAL(60, sum);  // 10 + 20 + 30 = 60
 }
 
