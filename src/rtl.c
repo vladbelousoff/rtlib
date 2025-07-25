@@ -24,9 +24,9 @@
 
 #include "rtl_memory.h"
 
-void rtl_init()
+void rtl_init(rtl_malloc_func_t malloc_func, rtl_free_func_t free_func)
 {
-  rtl_memory_init();
+  rtl_memory_init(malloc_func, free_func);
 }
 
 void rtl_cleanup()

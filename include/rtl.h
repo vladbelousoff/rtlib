@@ -27,6 +27,8 @@
 #include "rtl_log.h"
 #endif
 
+#include "rtl_memory.h"
+
 /**
  * @brief Assert macro that logs an error and aborts if condition is false.
  *        Disabled when RTL_DEBUG_BUILD is defined.
@@ -51,8 +53,10 @@
 /**
  * @brief Initializes the runtime library subsystems.
  *        Must be called once at the start of the application.
+ * @param malloc_func Custom malloc function (NULL to use standard malloc)
+ * @param free_func Custom free function (NULL to use standard free)
  */
-void rtl_init();
+void rtl_init(rtl_malloc_func_t malloc_func, rtl_free_func_t free_func);
 
 /**
  * @brief Cleans up the runtime library subsystems.

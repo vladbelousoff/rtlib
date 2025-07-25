@@ -26,6 +26,19 @@
 #include "rtl_list.h"
 #endif
 
+/**
+ * @brief Function pointer type for custom memory allocation function.
+ * @param size The number of bytes to allocate.
+ * @return A pointer to the allocated memory, or NULL on failure.
+ */
+typedef void* (*rtl_malloc_func_t)(unsigned long size);
+
+/**
+ * @brief Function pointer type for custom memory deallocation function.
+ * @param ptr Pointer to the memory block to free.
+ */
+typedef void (*rtl_free_func_t)(void* ptr);
+
 #define rtl_malloc(size) _rtl_malloc(__FILE__, __LINE__, size)
 #define rtl_strdup(str)  _rtl_strdup(__FILE__, __LINE__, str)
 
@@ -81,8 +94,10 @@ void rtl_free(void* data);
  * @brief Initializes the rtl memory management subsystem.
  *        Must be called before any rtl_malloc() or rtl_free() calls.
  *        In debug builds, initializes the allocation tracking list.
+ * @param malloc_func Custom malloc function (NULL to use standard malloc)
+ * @param free_func Custom free function (NULL to use standard free)
  */
-void rtl_memory_init();
+void rtl_memory_init(rtl_malloc_func_t malloc_func, rtl_free_func_t free_func);
 
 /**
  * @brief Cleans up the rtl memory management subsystem.

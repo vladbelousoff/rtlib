@@ -38,13 +38,43 @@
 static rtl_list_entry_t rtl_memory_allocations;
 #endif
 
+/**
+ * @internal
+ * @brief Wrapper function for standard malloc to match our function pointer signature.
+ */
+static void* default_malloc_wrapper(unsigned long size)
+{
+  return malloc(size);
+}
+
+/**
+ * @internal
+ * @brief Wrapper function for standard free to match our function pointer signature.
+ */
+static void default_free_wrapper(void* ptr)
+{
+  free(ptr);
+}
+
+/**
+ * @internal
+ * @brief Global function pointers for custom memory allocators.
+ */
+static rtl_malloc_func_t g_malloc_func = NULL;
+static rtl_free_func_t g_free_func = NULL;
+
 void* _rtl_malloc(const char* file, unsigned long line, unsigned long size)
 {
 #ifdef RTL_DEBUG_BUILD
   // It's not a memory leak, it's just a trick to add a bit more
   // info about allocated memory so...
   // ReSharper disable once CppDFAMemoryLeak
-  char* data = malloc(sizeof(rtl_memory_header_t) + size);
+  char* data = (char*)g_malloc_func(sizeof(rtl_memory_header_t) + size);
+
+  if (data == NULL) {
+    return NULL;
+  }
+
   rtl_memory_header_t* header = (rtl_memory_header_t*)data;
   header->source_location.file = file;
   header->source_location.line = line;
@@ -53,9 +83,10 @@ void* _rtl_malloc(const char* file, unsigned long line, unsigned long size)
   // Mark the memory with 0x77 to be able to debug uninitialized memory
   memset(&data[sizeof(rtl_memory_header_t)], 0x77, size);
   // Return only the needed piece and hide the header
+  // ReSharper disable once CppDFAMemoryLeak
   return &data[sizeof(rtl_memory_header_t)];
 #else
-  return malloc(size);
+  return g_malloc_func(size);
 #endif
 }
 
@@ -76,19 +107,27 @@ char* _rtl_strdup(const char* file, unsigned long line, const char* str)
 
 void rtl_free(void* data)
 {
+  if (data == NULL) {
+    return;
+  }
+
 #ifdef RTL_DEBUG_BUILD
   // Find the header with meta information
   rtl_memory_header_t* header = (rtl_memory_header_t*)((char*)data - sizeof(rtl_memory_header_t));
   rtl_list_remove(&header->link);
   // Now we can free the real allocated piece
-  free(header);
+  g_free_func(header);
 #else
-  free(data);
+  g_free_func(data);
 #endif
 }
 
-void rtl_memory_init()
+void rtl_memory_init(rtl_malloc_func_t malloc_func, rtl_free_func_t free_func)
 {
+  // Set custom allocators or default to standard malloc/free wrappers
+  g_malloc_func = malloc_func ? malloc_func : default_malloc_wrapper;
+  g_free_func = free_func ? free_func : default_free_wrapper;
+
 #ifdef RTL_DEBUG_BUILD
   rtl_list_init(&rtl_memory_allocations);
 #endif
@@ -105,7 +144,7 @@ void rtl_memory_cleanup()
     rtl_log_err("Leaked memory, file: %s, line: %lu, size: %lu", header->source_location.file,
       header->source_location.line, header->size);
     rtl_list_remove(&header->link);
-    free(header);
+    g_free_func(header);
   }
 #endif
 }

@@ -33,7 +33,7 @@
 // Test setup and teardown
 void setUp(void)
 {
-  rtl_init();
+  rtl_init(NULL, NULL);  // Use default malloc/free
 }
 
 void tearDown(void)
@@ -122,6 +122,53 @@ void test_memory_stress(void)
   for (i = 0; i < 100; i++) {
     rtl_free(data[i]);
   }
+}
+
+// Custom allocator test variables
+static int custom_malloc_call_count = 0;
+static int custom_free_call_count = 0;
+
+// Custom malloc function for testing
+static void* test_custom_malloc(unsigned long size)
+{
+  custom_malloc_call_count++;
+  return malloc(size);
+}
+
+// Custom free function for testing
+static void test_custom_free(void* ptr)
+{
+  custom_free_call_count++;
+  free(ptr);
+}
+
+// Test custom allocators
+void test_custom_allocators(void)
+{
+  // Reset counters
+  custom_malloc_call_count = 0;
+  custom_free_call_count = 0;
+
+  // Cleanup default initialization first
+  rtl_cleanup();
+
+  // Initialize with custom allocators
+  rtl_init(test_custom_malloc, test_custom_free);
+
+  // Test allocation
+  char* data = rtl_malloc(100);
+  TEST_ASSERT_NOT_NULL(data);
+  TEST_ASSERT(custom_malloc_call_count > 0);  // Custom malloc should have been called
+
+  // Test deallocation
+  rtl_free(data);
+  TEST_ASSERT(custom_free_call_count > 0);  // Custom free should have been called
+
+  // Cleanup
+  rtl_cleanup();
+
+  // Re-initialize with default allocators for other tests
+  rtl_init(NULL, NULL);
 }
 
 // Test structure for list tests
@@ -1188,6 +1235,7 @@ int main(void)
   RUN_TEST(test_different_sizes);
   RUN_TEST(test_reallocation_after_free);
   RUN_TEST(test_memory_stress);
+  RUN_TEST(test_custom_allocators);
 
   // List tests
   RUN_TEST(test_list_init);
