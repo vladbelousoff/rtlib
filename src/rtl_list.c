@@ -114,3 +114,21 @@ unsigned long rtl_list_length(const rtl_list_entry_t* head)
 
   return length;
 }
+
+void rtl_list_for_each_callback(const rtl_list_entry_t* head, rtl_list_callback_t callback, void* user_data)
+{
+  if (head == NULL || callback == NULL) {
+    return;
+  }
+
+  unsigned long index = 0;
+  rtl_list_entry_t* current;
+  
+  rtl_list_for_each(current, head)
+  {
+    if (!callback(index, current, user_data)) {
+      break;  // Stop iteration if callback returns false
+    }
+    index++;
+  }
+}

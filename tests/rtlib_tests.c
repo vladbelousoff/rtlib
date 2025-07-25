@@ -638,6 +638,172 @@ void test_list_for_each_indexed_stress(void)
   TEST_ASSERT_EQUAL(100, iteration_count);
 }
 
+// Callback function for testing - counts iterations
+static bool test_callback_counter(unsigned long index, rtl_list_entry_t* entry, void* user_data)
+{
+  int* counter = (int*)user_data;
+  (*counter)++;
+  return true;  // Continue iteration
+}
+
+// Callback function for testing - validates index and value
+static bool test_callback_validator(unsigned long index, rtl_list_entry_t* entry, void* user_data)
+{
+  test_node_t* node = rtl_list_record(entry, test_node_t, list_entry);
+  int* expected_value = (int*)user_data;
+  
+  // Verify that index matches the expected value
+  if (index != (unsigned long)node->value || index != (unsigned long)(*expected_value)) {
+    return false;  // Stop on mismatch
+  }
+  
+  (*expected_value)++;
+  return true;  // Continue iteration
+}
+
+// Callback function for testing - stops at specific index
+static bool test_callback_early_stop(unsigned long index, rtl_list_entry_t* entry, void* user_data)
+{
+  unsigned long* stop_at = (unsigned long*)user_data;
+  return index < *stop_at;  // Stop when we reach the specified index
+}
+
+// Callback function for testing - sums node values
+static bool test_callback_sum(unsigned long index, rtl_list_entry_t* entry, void* user_data)
+{
+  test_node_t* node = rtl_list_record(entry, test_node_t, list_entry);
+  int* sum_ptr = (int*)user_data;
+  *sum_ptr += node->value;
+  return true;  // Continue iteration
+}
+
+// Test rtl_list_for_each_callback with empty list
+void test_list_for_each_callback_empty(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  int counter = 0;
+  rtl_list_for_each_callback(&head, test_callback_counter, &counter);
+  
+  TEST_ASSERT_EQUAL(0, counter);
+}
+
+// Test rtl_list_for_each_callback with NULL callback
+void test_list_for_each_callback_null_callback(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  // Should handle NULL callback gracefully (no crash)
+  rtl_list_for_each_callback(&head, NULL, NULL);
+  
+  // If we get here, it handled NULL gracefully
+  TEST_ASSERT_TRUE(1);
+}
+
+// Test rtl_list_for_each_callback with single element
+void test_list_for_each_callback_single_element(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  int counter = 0;
+  rtl_list_for_each_callback(&head, test_callback_counter, &counter);
+  
+  TEST_ASSERT_EQUAL(1, counter);
+}
+
+// Test rtl_list_for_each_callback with multiple elements
+void test_list_for_each_callback_multiple_elements(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[5];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add nodes with values 0, 1, 2, 3, 4
+  for (i = 0; i < 5; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  int expected_value = 0;
+  rtl_list_for_each_callback(&head, test_callback_validator, &expected_value);
+  
+  // Should have processed all 5 elements
+  TEST_ASSERT_EQUAL(5, expected_value);
+}
+
+// Test rtl_list_for_each_callback with early termination
+void test_list_for_each_callback_early_stop(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[10];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add nodes with values 0, 1, 2, ..., 9
+  for (i = 0; i < 10; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  // Stop at index 3
+  unsigned long stop_at = 3;
+  int counter = 0;
+  rtl_list_for_each_callback(&head, test_callback_counter, &counter);
+  
+  // Reset counter and test early stop
+  counter = 0;
+  rtl_list_for_each_callback(&head, test_callback_early_stop, &stop_at);
+  
+  // Should have processed only indices 0, 1, 2 (stopped before 3)
+  int validation_counter = 0;
+  rtl_list_entry_t* current;
+  rtl_list_for_each(current, &head) {
+    if (validation_counter >= 3) break;
+    validation_counter++;
+  }
+  TEST_ASSERT_EQUAL(3, validation_counter);
+}
+
+// Test rtl_list_for_each_callback with different user data types
+void test_list_for_each_callback_user_data(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[3];
+  int i;
+
+  rtl_list_init(&head);
+
+  nodes[0].value = 10;
+  nodes[1].value = 20;
+  nodes[2].value = 30;
+  
+  for (i = 0; i < 3; i++) {
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  // Test with integer user data
+  int sum = 0;
+  
+  // Use a callback that sums the node values
+  rtl_list_for_each_callback(&head, test_callback_sum, &sum);
+  
+  TEST_ASSERT_EQUAL(60, sum);  // 10 + 20 + 30 = 60
+}
+
 void test_rtl_assert_success(void)
 {
   // Test that assert passes when condition is true
@@ -1046,6 +1212,12 @@ int main(void)
   RUN_TEST(test_list_for_each_indexed_multiple_elements);
   RUN_TEST(test_list_for_each_indexed_head_insertion_order);
   RUN_TEST(test_list_for_each_indexed_stress);
+  RUN_TEST(test_list_for_each_callback_empty);
+  RUN_TEST(test_list_for_each_callback_null_callback);
+  RUN_TEST(test_list_for_each_callback_single_element);
+  RUN_TEST(test_list_for_each_callback_multiple_elements);
+  RUN_TEST(test_list_for_each_callback_early_stop);
+  RUN_TEST(test_list_for_each_callback_user_data);
 
   // Hash table tests
   RUN_TEST(test_hash_table_init_cleanup);

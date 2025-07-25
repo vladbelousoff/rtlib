@@ -74,6 +74,15 @@ struct rtl_list_entry_t
 typedef struct rtl_list_entry_t rtl_list_entry_t;
 
 /**
+ * @brief Callback function type for list iteration.
+ * @param index The current index in the iteration (starting from 0).
+ * @param entry Pointer to the current list entry.
+ * @param user_data User-provided data passed to the callback.
+ * @return true to continue iteration, false to stop.
+ */
+typedef bool (*rtl_list_callback_t)(unsigned long index, rtl_list_entry_t* entry, void* user_data);
+
+/**
  * @brief Initializes the head of a list.
  * @param head Pointer to the list head entry.
  */
@@ -128,3 +137,11 @@ rtl_list_entry_t* rtl_list_next(const rtl_list_entry_t* current, const rtl_list_
  * @return The number of entries in the list (excluding the head).
  */
 unsigned long rtl_list_length(const rtl_list_entry_t* head);
+
+/**
+ * @brief Iterate over a list using a callback function with index support.
+ * @param head Pointer to the list head entry.
+ * @param callback Callback function to call for each entry.
+ * @param user_data User data to pass to the callback function.
+ */
+void rtl_list_for_each_callback(const rtl_list_entry_t* head, rtl_list_callback_t callback, void* user_data);
