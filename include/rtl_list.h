@@ -53,6 +53,15 @@
     position = n, n = position->next)
 
 /**
+ * @brief Iterate over a list with an index counter.
+ * @param index The index variable.
+ * @param position The &struct rtl_list_entry to use as a loop cursor.
+ * @param head The head for your list.
+ */
+#define rtl_list_for_each_indexed(index, position, head)                                           \
+  for (position = (head)->next, index = 0; position != (head); position = position->next, index++)
+
+/**
  * @brief Doubly linked list entry structure.
  *        Can be embedded in other structures to create linked lists.
  */

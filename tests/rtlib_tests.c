@@ -498,6 +498,146 @@ void test_list_length_stress(void)
   }
 }
 
+// Test rtl_list_for_each_indexed with empty list
+void test_list_for_each_indexed_empty(void)
+{
+  rtl_list_entry_t head;
+  rtl_list_init(&head);
+
+  rtl_list_entry_t* position;
+  unsigned long index = 0;
+  int iteration_count = 0;
+
+  rtl_list_for_each_indexed(index, position, &head)
+  {
+    iteration_count++;
+  }
+
+  TEST_ASSERT_EQUAL(0, iteration_count);
+}
+
+// Test rtl_list_for_each_indexed with single element
+void test_list_for_each_indexed_single_element(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node;
+
+  rtl_list_init(&head);
+  node.value = 42;
+  rtl_list_add_head(&head, &node.list_entry);
+
+  rtl_list_entry_t* position;
+  int iteration_count = 0;
+  unsigned long index = 0;
+  unsigned long expected_index = 0;
+
+  rtl_list_for_each_indexed(index, position, &head)
+  {
+    TEST_ASSERT_EQUAL(expected_index, index);
+    test_node_t* current_node = rtl_list_record(position, test_node_t, list_entry);
+    TEST_ASSERT_EQUAL(42, current_node->value);
+    iteration_count++;
+    expected_index++;
+  }
+
+  TEST_ASSERT_EQUAL(1, iteration_count);
+}
+
+// Test rtl_list_for_each_indexed with multiple elements
+void test_list_for_each_indexed_multiple_elements(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[5];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add nodes with values 0, 1, 2, 3, 4
+  for (i = 0; i < 5; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  rtl_list_entry_t* position;
+  int iteration_count = 0;
+  unsigned long index = 0;
+  unsigned long expected_index = 0;
+
+  rtl_list_for_each_indexed(index, position, &head)
+  {
+    TEST_ASSERT_EQUAL(expected_index, index);
+    test_node_t* current_node = rtl_list_record(position, test_node_t, list_entry);
+    TEST_ASSERT_EQUAL(expected_index, current_node->value);
+    iteration_count++;
+    expected_index++;
+  }
+
+  TEST_ASSERT_EQUAL(5, iteration_count);
+}
+
+// Test rtl_list_for_each_indexed order with head insertions
+void test_list_for_each_indexed_head_insertion_order(void)
+{
+  rtl_list_entry_t head;
+  test_node_t node1, node2, node3;
+
+  rtl_list_init(&head);
+
+  node1.value = 1;
+  node2.value = 2;
+  node3.value = 3;
+
+  rtl_list_add_head(&head, &node1.list_entry);
+  rtl_list_add_head(&head, &node2.list_entry);
+  rtl_list_add_head(&head, &node3.list_entry);
+
+  // Order should be: 3, 2, 1 (reverse insertion order for head insertions)
+  rtl_list_entry_t* position;
+  int iteration_count = 0;
+  unsigned long index = 0;
+
+  rtl_list_for_each_indexed(index, position, &head)
+  {
+    const int expected_values[] = { 3, 2, 1 };
+    TEST_ASSERT_EQUAL(iteration_count, index);
+    const test_node_t* current_node = rtl_list_record(position, test_node_t, list_entry);
+    TEST_ASSERT_EQUAL(expected_values[iteration_count], current_node->value);
+    iteration_count++;
+  }
+
+  TEST_ASSERT_EQUAL(3, iteration_count);
+}
+
+// Test rtl_list_for_each_indexed with larger list
+void test_list_for_each_indexed_stress(void)
+{
+  rtl_list_entry_t head;
+  test_node_t nodes[100];
+  int i;
+
+  rtl_list_init(&head);
+
+  // Add 100 nodes
+  for (i = 0; i < 100; i++) {
+    nodes[i].value = i;
+    rtl_list_add_tail(&head, &nodes[i].list_entry);
+  }
+
+  rtl_list_entry_t* position;
+  int iteration_count = 0;
+  unsigned long index = 0;
+
+  rtl_list_for_each_indexed(index, position, &head)
+  {
+    TEST_ASSERT_EQUAL(iteration_count, index);
+    test_node_t* current_node = rtl_list_record(position, test_node_t, list_entry);
+    TEST_ASSERT_EQUAL(iteration_count, current_node->value);
+    iteration_count++;
+  }
+
+  TEST_ASSERT_EQUAL(100, iteration_count);
+}
+
 void test_rtl_assert_success(void)
 {
   // Test that assert passes when condition is true
@@ -901,6 +1041,11 @@ int main(void)
   RUN_TEST(test_list_length_multiple_elements_tail);
   RUN_TEST(test_list_length_after_remove);
   RUN_TEST(test_list_length_stress);
+  RUN_TEST(test_list_for_each_indexed_empty);
+  RUN_TEST(test_list_for_each_indexed_single_element);
+  RUN_TEST(test_list_for_each_indexed_multiple_elements);
+  RUN_TEST(test_list_for_each_indexed_head_insertion_order);
+  RUN_TEST(test_list_for_each_indexed_stress);
 
   // Hash table tests
   RUN_TEST(test_hash_table_init_cleanup);
