@@ -130,7 +130,7 @@ static int custom_malloc_call_count = 0;
 static int custom_free_call_count = 0;
 
 // Custom malloc function for testing
-static void* test_custom_malloc(unsigned long size)
+static void* test_custom_malloc(size_t size)
 {
   custom_malloc_call_count++;
   return malloc(size);

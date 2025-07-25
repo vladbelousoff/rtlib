@@ -42,7 +42,7 @@ static rtl_list_entry_t rtl_memory_allocations;
  * @internal
  * @brief Wrapper function for standard malloc to match our function pointer signature.
  */
-static void* default_malloc_wrapper(unsigned long size)
+static void* default_malloc_wrapper(size_t size)
 {
   return malloc(size);
 }

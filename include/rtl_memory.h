@@ -26,12 +26,14 @@
 #include "rtl_list.h"
 #endif
 
+#include <stddef.h>
+
 /**
  * @brief Function pointer type for custom memory allocation function.
  * @param size The number of bytes to allocate.
  * @return A pointer to the allocated memory, or NULL on failure.
  */
-typedef void* (*rtl_malloc_func_t)(unsigned long size);
+typedef void* (*rtl_malloc_func_t)(size_t size);
 
 /**
  * @brief Function pointer type for custom memory deallocation function.
