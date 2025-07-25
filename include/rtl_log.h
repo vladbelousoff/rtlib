@@ -24,6 +24,17 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+// Time stamp functionality
+static const char* rtl_get_time_stamp(void)
+{
+  static char stamp[16];
+  const time_t now = time(NULL);
+  const struct tm* tm_info = localtime(&now);
+  strftime(stamp, sizeof(stamp), "%H:%M:%S", tm_info);
+  return stamp;
+}
 
 static const char* rtl_filename(const char* filename)
 {
