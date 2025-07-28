@@ -67,7 +67,7 @@ static const char* rtl_filename(const char* filename)
 #define RTL_COLOR_WHITE  "\033[37m"
 
 // Common log format string
-#define RTL_LOG_FORMAT "[%-s|%-s] [%-16s:%4u] (%s) "
+#define RTL_LOG_FORMAT "[%-s|%-s] [%-16s:%5u] (%s) "
 
 // Unified fprintf-based logging macro for colored format
 #define _rtl_printf_color(color, lvl, file, line, func, fmt, ...)                                  \
