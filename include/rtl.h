@@ -32,7 +32,6 @@
 
 /**
  * @brief Assert macro that logs an error and aborts if condition is false.
- *        Disabled when RTL_DEBUG_BUILD is defined.
  * @param condition The condition to check
  * @param message Optional error message (can be a format string with args)
  */
