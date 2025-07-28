@@ -23,11 +23,12 @@
 #pragma once
 
 #ifdef RTL_DEBUG_BUILD
-#include <stdlib.h>
 #include "rtl_log.h"
 #endif
 
 #include "rtl_memory.h"
+
+#include <stdlib.h>
 
 /**
  * @brief Assert macro that logs an error and aborts if condition is false.
