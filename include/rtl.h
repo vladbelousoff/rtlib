@@ -35,7 +35,6 @@
  * @param condition The condition to check
  * @param message Optional error message (can be a format string with args)
  */
-#ifdef RTL_DEBUG_BUILD
 #define rtl_assert(condition, message, ...)                                                        \
   do {                                                                                             \
     if (!(condition)) {                                                                            \
@@ -43,12 +42,6 @@
       exit(EXIT_FAILURE);                                                                          \
     }                                                                                              \
   } while (0)
-#else
-#define rtl_assert(condition, message, ...)                                                        \
-  do {                                                                                             \
-    (void)(condition);                                                                             \
-  } while (0)
-#endif
 
 /**
  * @brief Initializes the runtime library subsystems.
