@@ -22,6 +22,7 @@
 
 #include "rtl_hash.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include "rtl.h"
 #include "rtl_log.h"
@@ -165,7 +166,7 @@ bool rtl_hash_table_insert(rtl_hash_table_t* table, const void* key, unsigned lo
   rtl_assert(key_size > 0, "Key size must be greater than 0");
   rtl_assert(value_size > 0, "Value size must be greater than 0");
 
-  unsigned long hash = table->hash_function(key, key_size);
+  uint32_t hash = table->hash_function(key, key_size);
   unsigned long bucket_index = hash % table->bucket_count;
   rtl_list_entry_t* bucket = &table->buckets[bucket_index];
 
@@ -210,7 +211,7 @@ void* rtl_hash_table_find(
   rtl_assert(key != NULL, "Key cannot be NULL");
   rtl_assert(key_size > 0, "Key size must be greater than 0");
 
-  const unsigned long hash = table->hash_function(key, key_size);
+  const uint32_t hash = table->hash_function(key, key_size);
   const unsigned long bucket_index = hash % table->bucket_count;
   const rtl_list_entry_t* bucket = &table->buckets[bucket_index];
 
@@ -231,7 +232,7 @@ bool rtl_hash_table_remove(rtl_hash_table_t* table, const void* key, unsigned lo
   rtl_assert(key != NULL, "Key cannot be NULL");
   rtl_assert(key_size > 0, "Key size must be greater than 0");
 
-  const unsigned long hash = table->hash_function(key, key_size);
+  const uint32_t hash = table->hash_function(key, key_size);
   const unsigned long bucket_index = hash % table->bucket_count;
   const rtl_list_entry_t* bucket = &table->buckets[bucket_index];
 
@@ -264,19 +265,18 @@ double rtl_hash_table_load_factor(const rtl_hash_table_t* table)
   return (double)table->entry_count / (double)table->bucket_count;
 }
 
-unsigned long rtl_hash_fnv1a(const void* key, unsigned long key_size)
+uint32_t rtl_hash_fnv1a(const void* key, unsigned long key_size)
 {
-  // FNV-1a hash algorithm
-  const unsigned long FNV_OFFSET_BASIS = 14695981039346656037UL;
-  // ReSharper disable once CppTooWideScope
-  const unsigned long FNV_PRIME = 1099511628211UL;
+  // FNV-1a hash algorithm (32-bit version)
+  const uint32_t FNV_OFFSET_BASIS_32 = 2166136261U;
+  const uint32_t FNV_PRIME_32 = 16777619U;
 
-  unsigned long hash = FNV_OFFSET_BASIS;
+  uint32_t hash = FNV_OFFSET_BASIS_32;
   const unsigned char* data = key;
 
   for (unsigned long i = 0; i < key_size; i++) {
     hash ^= data[i];
-    hash *= FNV_PRIME;
+    hash *= FNV_PRIME_32;
   }
 
   return hash;

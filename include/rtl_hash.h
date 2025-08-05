@@ -23,6 +23,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "rtl_list.h"
 
 /**
@@ -31,7 +32,7 @@
  * @param key_size Size of the key in bytes.
  * @return Hash value for the key.
  */
-typedef unsigned long (*rtl_hash_function_t)(const void* key, unsigned long key_size);
+typedef uint32_t (*rtl_hash_function_t)(const void* key, unsigned long key_size);
 
 /**
  * @brief Key comparison function type definition.
@@ -151,7 +152,7 @@ double rtl_hash_table_load_factor(const rtl_hash_table_t* table);
  * @param key_size Size of the key in bytes.
  * @return Hash value for the key.
  */
-unsigned long rtl_hash_fnv1a(const void* key, unsigned long key_size);
+uint32_t rtl_hash_fnv1a(const void* key, unsigned long key_size);
 
 /**
  * @brief Default key comparison function for byte-wise comparison.
